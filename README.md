@@ -1,143 +1,173 @@
 # Autonomous Database Health Assistant
 
-Read-only database operations assistant for Oracle Private Agent Factory 26.7.
+A database monitoring MVP built with Oracle Private Agent Factory (PAF), an Agent node and Select AI Bridge. It answers supported monitoring questions, clarifies malformed requests, and explains the limits of the available evidence.
 
-The implementation is delivered in three phases:
+This repository contains the current Select AI flow, its LiveLabs and validation evidence, plus the earlier fixed PL/SQL API implementation. The recorded implementation and test status below is from **24 September 2026**.
 
-1. **Database backend:** dedicated accounts, five monitoring functions, SQLcl deployment and live permission tests.
-2. **Agent Builder:** configure a private model, database data source, approved PL/SQL tools and chat flow.
-3. **Pilot validation:** exercise realistic DBA questions, failure handling, private network/data flow and restricted sharing.
+## Start here
 
-The database connection is `DB_HEALTH_AGENT`. `DB_HEALTH_OWNER` owns the
-definer-rights package and cannot log in. ADMIN is used only to provision and
-deploy into the owner schema. No objects are installed into ADMIN or SYS.
+| Starting point | Guide | Word document |
+|---|---|---|
+| Database already prepared; configure everything through PAF | [PAF configuration-only LiveLab](docs/livelab-paf-only/README.md) | [Download DOCX](docs/livelab-paf-only/ADB_Health_Monitoring_Agent_PAF_Only_LiveLab.docx) |
+| Need database preparation and PAF configuration | [Complete LiveLab](docs/livelab/README.md) | [Download DOCX](docs/livelab/ADB_Health_Monitoring_Agent_LiveLab.docx) |
+
+The PAF-only lab assumes the runtime account, permissions, monitoring views and provider access are ready. Neither guide installs PAF or provisions an Autonomous Database. Both are local LiveLabs-style workshop packages, not published Oracle LiveLabs offerings.
+
+For the existing implementation, open **Workflows → ADB Health Monitoring Agent MVP → Playground**. See the [saved flow configuration](docs/monitoring-agent-flow.md) and [complete Agent instructions](docs/monitoring-agent-instructions.txt).
+
+## Current Agent flow
 
 ```text
-Agent Factory -> DB_HEALTH_AGENT.DB_HEALTH_API -> DB_HEALTH_OWNER.DB_HEALTH_API
-                                      -> five approved Oracle monitoring views
+Chat input ───► Agent ───► Chat output
+                 ▲
+                 │ Tool
+          Select AI Bridge
+          Profile + Run SQL
+                 │
+                 ▼
+          DB_HEALTH_AGENT
+          MONITOR_* views
+                 │
+                 ▼
+          Oracle monitoring views
 ```
 
+| Setting | Recorded configuration |
+|---|---|
+| Flow | ADB Health Monitoring Agent MVP |
+| Flow ID | `5C2A338670CA1162E0634815000AC353` |
+| Database source | ADB HEALTH MVP |
+| Runtime database login | DB_HEALTH_AGENT |
+| Select AI profile | DB_HEALTH_AGENT |
+| Bridge mode / action | Profile / Run SQL |
+| Agent model registration | llm_model_entry (OCI), temperature 0.01 |
+| Agent memory | Disabled |
+| Select AI output token limit | 4096 |
+| Object-list mode / enforcement | All / disabled for the approved MVP workaround |
+| Last observed publication state | Published |
 
-## Select AI monitoring LiveLab
+The Agent's model registration and the database's Select AI profile are separate configurations. Select AI generates and executes queries; the Agent validates requests and explains returned results. A standalone Chat Input → Select AI → Chat Output flow is retained as an earlier test path, but it does not provide the same conversational behavior.
 
-For the newer conversational Agent using Select AI Bridge, follow the
-[step-by-step monitoring LiveLab](docs/livelab/README.md). It includes database
-preparation, UI configuration, the final Agent prompt and validation exercises.
-This is a separate flow from the original fixed PL/SQL API walkthrough below.
-For a prepared database, use the [PAF configuration-only alternative](docs/livelab-paf-only/README.md).
+The four-node flow connects Chat Input **Message** to Agent **Prompt**, Select AI Bridge **Tool** to Agent **Tools**, and Agent **Message** to Chat Output **Message**. General slowdown checks cover sessions and cumulative SQL. Overall health uses a compact identity/session/storage/job summary followed by a cumulative SQL check.
 
-## Phase 1: database backend
+## Monitoring coverage
 
-All database operations use the SQLcl bundled with the Oracle SQL Developer
-extension, as configured in `scripts/db.py`. The helper requires a saved SQLcl
-connection and the exact database identity; it stops on an unexpected database
-or login. Python uses only its standard library.
+All five selected views belong to `DB_HEALTH_AGENT`:
 
-Run from this repository, substituting your existing connection and the exact
-value returned by `SYS_CONTEXT('USERENV','DB_NAME')`:
+| View | Evidence | Scope limitation |
+|---|---|---|
+| `MONITOR_DATABASE_OVERVIEW` | Database identity, service and observation time | Reachability is not overall health |
+| `MONITOR_SESSIONS` | Active or blocked user sessions, waits and blocker IDs | Current snapshot only |
+| `MONITOR_STORAGE_USAGE` | Tablespace used bytes, capacity and percentage | Not Autonomous service provisioned storage or OCI StorageUtilization |
+| `MONITOR_JOB_RUNS` | Retained Scheduler runs with all statuses and timestamps | Not job definitions or a live running-job inventory |
+| `MONITOR_SQL_WORKLOAD` | Cached per-instance SQL counters and elapsed time | Cumulative counters, not historical daily performance |
+
+`COLLECTED_AT_UTC` is generated at observation time; it is not a stored sample date. Use the retained job event timestamps for job-history windows. An empty failed-job result does not prove every expected job ran. The earlier `MONITOR_FAILED_JOBS` view remains for compatibility but is not one of the five selected profile objects.
+
+Same-schema wrapper views make the monitoring objects discoverable in the tested PAF picker. The current Select AI flow queries these views directly; it does not call `DB_HEALTH_OWNER.DB_HEALTH_API`.
+
+## Database access and MVP limits
+
+`DB_HEALTH_AGENT` is the runtime login. `DB_HEALTH_OWNER` owns the earlier definer-rights package and has no login. ADMIN is used for provisioning only; application objects are not installed in ADMIN or SYS.
+
+For the Select AI path, the runtime account has direct SELECT access to five SYS monitoring sources and execution access to `DBMS_CLOUD` and `DBMS_CLOUD_AI`. These capabilities are broader than the original package-only interface. The read-only wrapper views expose a smaller column set, but do not remove the account's underlying privileges.
+
+Object-list enforcement was disabled after storage/job queries encountered `ORA-20004` despite naming selected views. Disabling enforcement allowed those checks to execute; the exact internal cause remains unproven. The object list now guides metadata selection rather than enforcing the five-view boundary. See the [validation investigation](tests/paf/select-ai-validation-investigation-2026-09-24.md).
+
+The Agent is instructed to perform monitoring only. Its instructions do not guarantee input validation, access isolation or SQL correctness. SQL meaning and causal conclusions still require review. A privately deployed PAF application can call hosted models; use approved destinations for prompts, schema metadata, returned monitoring data and traces.
+
+## Validation status
+
+The new Agent was tested with the original 21 prompts plus three out-of-scope questions:
+
+- All 24 requests returned HTTP 200; transport success was not graded as behavioral success.
+- All ten clarification/scope cases passed in that baseline run: nonsense, invalid limits/durations, ambiguous overnight timing, unsupported historical comparison, and unrelated questions.
+- Initial multi-check completion and explanation issues were identified and the Agent instructions were revised.
+- Targeted retests returned complete slowdown/workload answers, a retained-log caveat, and a complete overall-health answer after the two-call adjustment.
+- **The full 24-case suite has not been rerun after the final overall-health adjustment.** Some wording and causal interpretation still warrant review; this is not an all-tests-pass claim.
+
+Read the [current Agent test report](tests/paf/results-monitoring-agent-2026-09-24.md) and [failed-query investigation](tests/paf/select-ai-failed-case-investigation-2026-09-24.md). The [24 workshop prompts](docs/livelab-paf-only/files/test-prompts.md) provide expected behavior for manual Playground tests.
+
+### Run the current Agent regression
+
+In the configured project environment:
 
 ```bash
-python3 scripts/db.py preflight --connection 'YOUR_ADMIN_CONNECTION' --expected-db YOUR_DB_NAME
-python3 scripts/db.py provision --connection 'YOUR_ADMIN_CONNECTION' --expected-db YOUR_DB_NAME
-python3 scripts/db.py install --connection 'YOUR_ADMIN_CONNECTION' --expected-db YOUR_DB_NAME
-python3 scripts/db.py verify-admin --connection 'YOUR_ADMIN_CONNECTION' --expected-db YOUR_DB_NAME
+python3 scripts/test_monitoring_agent.py --agent-id 5C2A338670CA1162E0634815000AC353
 ```
 
-Provisioning creates a 40-character random password at
-`.local/db_health_agent.password` (directory mode 0700; file mode 0600).
-It is passed to SQLcl over stdin with history/echo disabled and is never placed
-in command-line arguments. `.local/` is ignored by Git. Treat the file as a
-credential and enter its contents only in a password field or approved secret store.
-Do not paste it into chat or commit it. The owner has `NO AUTHENTICATION`.
+The runner reads `agent_factory_url`, `agent_factory_username` and `agent_factory_password` from the ignored `.env` file. It uses the authenticated owner run endpoint, creates distinct chat rooms and writes private responses under `.local/paf-tests/`. No integration API key is needed for this runner. Running it invokes the configured models and monitoring queries.
 
-Provisioning refuses to adopt existing users or overwrite a credential file.
-DDL commits independently: on failure, inspect the created users and grants
-before resuming. Do not delete the password file merely to force a retry. Package
-installation is repeatable; no automatic schema-drop or password-reset operation
-is supplied. The scripts are deliberately tied to the approved account names.
+The runner is tied to the reviewed database source ID, profile and four-node graph; `scripts/paf_client.py` pins the reviewed server certificate. For another deployment, review these values and verify its certificate before adapting the client. Do not bypass those checks merely to make a different environment run. The script collects evidence; final answers require behavioral review and do not include complete generated SQL/tool traces.
 
-After provisioning, clone the admin connection's network configuration in SQLcl
-with the runtime username and **without** the saved admin password:
+## Database setup and tooling
 
-```sql
-connmgr clone -original "YOUR_ADMIN_CONNECTION" -username DB_HEALTH_AGENT -nopwd "YOUR_RUNTIME_CONNECTION"
+For the current Select AI path, follow the [complete LiveLab](docs/livelab/README.md). It includes:
+
+- [First-time monitoring grants and views](docs/livelab/files/prepare-monitoring.sql), run as ADMIN against an explicitly checked database with an existing runtime account.
+- [Runtime view verification](docs/livelab/files/verify-monitoring.sql), run as DB_HEALTH_AGENT.
+
+Use the SQLcl bundled with the Oracle SQL Developer extension, as required by [AGENTS.md](AGENTS.md):
+
+```text
+/home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql
 ```
 
-Then verify through an actual runtime login:
+The project helper `scripts/db.py` handles the original account/package setup using a saved connection and expected database identity. Provisioning creates a random password in `.local/db_health_agent.password` with restricted permissions and refuses to adopt existing users or overwrite that file. It supplies the password over SQLcl stdin rather than command-line arguments. DDL may commit before a later failure; inspect partial state instead of rerunning or resetting credentials blindly.
 
-```bash
-python3 scripts/db.py verify-runtime --connection 'YOUR_RUNTIME_CONNECTION' --expected-db YOUR_DB_NAME
+Keep passwords, wallets, connection exports, live query results and diagnostic logs out of tracked files. `.env`, `.local/`, wallet files and logs are ignored. SQLcl and PAF have separate connection stores; verify PAF connectivity independently.
+
+## Earlier fixed PL/SQL API path
+
+This implementation remains available for workflows using Oracle PL/SQL Executor:
+
+```text
+Agent → Oracle PL/SQL Executor → DB_HEALTH_AGENT.DB_HEALTH_API
+                             → DB_HEALTH_OWNER.DB_HEALTH_API
+                             → approved monitoring sources
 ```
-
-This runtime connection must have no saved password: the helper supplies the
-generated password over SQLcl stdin with command history disabled. It is a local SQLcl connection;
-it does not create an Agent Factory data source.
-
-## Monitoring interface
-
-Agent-facing routines are in `DB_HEALTH_AGENT.DB_HEALTH_API`. They delegate to
-`DB_HEALTH_OWNER.DB_HEALTH_API`, return a JSON CLOB and
-accepts no SQL text, database name or object name from the caller.
 
 | Function | Parameters | Evidence |
-| --- | --- | --- |
-| `GET_DATABASE_OVERVIEW` | None | Reachability, caller identity, service and database/container identity |
-| `GET_SESSIONS` | `P_LIMIT` default 20 | Active/blocked user sessions, waits and blocking session/instance IDs |
-| `GET_STORAGE_USAGE` | `P_LIMIT` default 20 | Tablespace used bytes, capacity bytes and percentage |
-| `GET_FAILED_JOBS` | `P_HOURS_BACK` default 24; `P_LIMIT` default 20 | Failed Scheduler runs, timestamps and numeric error codes |
-| `GET_SQL_WORKLOAD` | `P_LIMIT` default 20 | Cached per-instance SQL statistics ranked by cumulative elapsed time |
+|---|---|---|
+| `GET_DATABASE_OVERVIEW` | None | Identity and reachability |
+| `GET_SESSIONS` | `P_LIMIT`, default 20 | Active/blocked sessions |
+| `GET_STORAGE_USAGE` | `P_LIMIT`, default 20 | Tablespace usage |
+| `GET_FAILED_JOBS` | `P_HOURS_BACK`, default 24; `P_LIMIT`, default 20 | Retained failed Scheduler runs |
+| `GET_SQL_WORKLOAD` | `P_LIMIT`, default 20 | Cumulative cached SQL |
 
-Limits must be integers from 1 to 100. History must be an integer from 1 to 168
-hours. Explicit nulls and out-of-range values return `invalid_input`. These are
-bounded responses, not query-duration limits; configure a supported execution
-timeout in the Agent Factory/runtime environment before a production pilot.
+These functions return JSON CLOBs, accept no SQL text or object names, and validate integer row limits of 1–100 and job-history windows of 1–168 hours. Those parameter bounds and JSON response contracts belong to the fixed API; they are not inherently imposed by Select AI Bridge. Do not add a generic SQL execution routine or write operation to `DB_HEALTH_API`.
 
-Responses contain `api_version`, `check`, `status`, `database`, `container`,
-`collected_at_utc`, `source`, `row_count`, `truncated`, `rows` and `note`.
-Failures include `error_code` and a generic `message`. No raw SQL, SQL bind values,
-job action text, or free-form Scheduler error output is included.
+The same-schema runtime package delegates to the non-login owner's package so PAF can discover the routines. Package installation uses `db/02_package_spec.sql`, `db/03_package_body.sql`, `db/04_validate_install.sql` and `db/05_runtime_api.sql` through `scripts/db.py`. The [earlier Agent Builder guide](docs/agent-builder.md) and [PL/SQL Agent prompt](agent/system-prompt.txt) apply to that flow, not the current Bridge flow. Its historical integration results are in the [instructions-updated report](tests/paf/results-instructions-updated-2026-09-24.md).
 
-- `ok` means collection succeeded, **not** overall database health.
-- `unavailable` means the executing function failed; it returns no partial rows.
-- Connection failures and invalid-package errors can occur before a function
-  executes. The Agent Builder prompt must treat tool-level errors the same way.
-- An empty failure-history result means no retained matching records; it does
-  not prove every expected job ran.
-- SQL statistics are cumulative cache counters, not historical windows. Parallel
-  execution and repeated executions affect totals and averages.
-- Tablespace capacity includes Oracle's autoextend calculations and is distinct
-  from Autonomous service provisioned storage or OCI `StorageUtilization`.
-- Visibility is the connected Autonomous container, not the underlying fleet.
+**Legacy verification is specific to the package-only privilege model.** `db/tests/admin.sql` expects exactly one runtime object grant, and `db/tests/runtime.sql` expects direct monitoring-view reads to be denied. Accordingly, `scripts/db.py verify-admin` and `verify-runtime` are not acceptance checks for the current Select AI-enabled account. Its additional authorized grants conflict with those assertions. Use the current view-verification script and Agent regression for the Select AI path; do not revoke required grants just to satisfy legacy tests.
 
-## Phase 2 and 3
+## Repository map
 
-Use [the Agent Builder setup guide](docs/agent-builder.md) and
-[agent instructions](agent/system-prompt.txt). Database deployment does not
-configure or publish the agent. Private endpoint routing, private LLM hosting,
-tool-result serialization in Agent Factory and tracing destinations must be
-verified in the application environment.
+| Path | Purpose |
+|---|---|
+| `docs/livelab-paf-only/` | PAF-only workshop, DOCX, instructions and test prompts |
+| `docs/livelab/` | Complete workshop, DOCX and database preparation assets |
+| `docs/monitoring-agent-flow.md` | Recorded current flow settings |
+| `docs/monitoring-agent-instructions.txt` | Canonical current Agent instructions |
+| `db/` | Original package deployment, monitoring grants/views and legacy tests |
+| `scripts/test_monitoring_agent.py` | Current four-node Agent regression |
+| `scripts/test_select_ai.py` | Earlier direct Select AI flow regression |
+| `scripts/test_paf.py` | Earlier fixed PL/SQL flow regression |
+| `tests/paf/` | Prompts, reviewed reports and investigations |
+| `.local/` | Ignored private credentials, responses and diagnostics |
 
-The live SQL tests cover account grants, package validity, real runtime login,
-all five responses, bounds, invalid inputs, truncation when data is available,
-metadata discovery and denied direct monitoring-view access. They do not create
-blocking sessions or intentionally fail Scheduler jobs on the target database.
-Those controlled fixtures and simulated tool failures belong in the pilot test
-environment. A successful SQLcl test is not an end-to-end Agent Factory test.
+To regenerate Word documents from the workshop Markdown and appendices:
+
+```bash
+python3 scripts/export_livelab_docx.py
+python3 scripts/export_livelab_docx.py --paf-only
+```
+
+The exporter uses Python's standard library. When updating the canonical Agent instructions, synchronize both workshops' instruction copies before rebuilding their Word documents. Package validation checks the DOCX structure; it is not visual rendering in Word.
 
 ## References
 
 - [Oracle Agent Builder components, 26.7](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/agent-builder-components.html)
+- [Configure Select AI](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/select-ai.html)
 - [Agent Factory database data sources](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/database.html)
-- [Schema-only accounts](https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/CREATE-USER.html)
-- [Definer-rights procedure privileges](https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/how-procedure-privileges-affect-definers-rights.html)
-
-## Same-schema discovery compatibility
-
-The installed Agent Factory UI listed the overview function only after a wrapper
-was created in DB_HEALTH_AGENT (confirmed by the user on 2026-09-24). The normal
-install now deploys all five same-schema wrappers via `db/05_runtime_api.sql`.
-They delegate to the original owner package and need no extra privileges.
-`verify-runtime` now exercises this agent-facing path. On an existing installation,
-run the `install-runtime-api` action with the ADMIN connection and expected database,
-then run `verify-runtime`. Refresh the Agent Factory node and select the five
-DB_HEALTH_AGENT routines. End-to-end tool execution remains to be checked in the UI.
+- [Configure LLMs](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/llm-management.html)
