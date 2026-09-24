@@ -6,6 +6,8 @@ This README covers the current Select AI flow, its LiveLabs and validation evide
 
 ## Start here
 
+New to this checkout or connecting from another machine? Read the [complete environment setup and handoff guide](docs/setup/README.md) first.
+
 | Starting point | Guide | Word document |
 |---|---|---|
 | Database already prepared; configure everything through PAF | [PAF configuration-only LiveLab](docs/livelab-paf-only/README.md) | [Download DOCX](docs/livelab-paf-only/ADB_Health_Monitoring_Agent_PAF_Only_LiveLab.docx) |
@@ -100,6 +102,74 @@ The runner reads `agent_factory_url`, `agent_factory_username` and `agent_factor
 
 The runner is tied to the reviewed database source ID, profile and four-node graph; `scripts/paf_client.py` pins the reviewed server certificate. For another deployment, review these values and verify its certificate before adapting the client. Do not bypass those checks merely to make a different environment run. The script collects evidence; final answers require behavioral review and do not include complete generated SQL/tool traces.
 
+## Setup and handoff for another contributor
+
+Start with the [complete environment setup guide](docs/setup/README.md). It covers a fresh checkout, reconnecting to an existing deployment, `.env`, database credentials and wallets, SQLcl saved connections, network/TLS checks, PAF database/model/profile/flow settings, script adaptation, testing and later credential/certificate rotation.
+
+A Git clone does not recreate database accounts, saved connections, PAF resources, passwords or wallets. Obtain the intended environment and access details from the appropriate owner; do not reuse recorded instance IDs as defaults for a different deployment.
+
+### What must be configured
+
+| Layer | Configuration | Where it lives |
+|---|---|---|
+| Local tools | Git, Python 3.9+, bundled SQLcl for DB work | Developer machine |
+| PAF client login | URL, username and password | Ignored `.env` |
+| Database connection | Expected DB_NAME, runtime user, service/TNS alias, network method, wallet and credential | SQLcl connection manager and approved local secret location |
+| PAF database source | Runtime connection, wallet/service settings and internal source ID | PAF Data Sources |
+| Agent model | Registration, provider/model, endpoint/region, authentication and tool calling | PAF LLM Management |
+| Select AI | Database-owned credential/profile, provider model and five-view object list | PAF Select AI Framework |
+| Agent flow | Model, Bridge source/profile/action, instructions, memory and flow ID | PAF Agent Builder |
+| Script compatibility | Verified TLS pin, SQLcl path, expected source/profile IDs | Existing helper constants; see the setup guide |
+| Local handoff | Verified nonsecret values, secret-store references and dates | Ignored `.local/environment.md` |
+| Coding-agent instructions | Local paths, target references and work rules | Ignored root `AGENTS.md` |
+
+Use the [environment handoff worksheet](docs/templates/environment-handoff.example.md) to collect the details. It is a checklist for a person or coding agent, not runtime configuration automatically read by the scripts.
+
+### Create missing local files
+
+From the repository root on Linux/macOS:
+
+```bash
+mkdir -p .local/paf-tests
+chmod 700 .local .local/paf-tests
+cp -n .env.example .env
+cp -n docs/templates/AGENTS.local.example.md AGENTS.md
+cp -n docs/templates/environment-handoff.example.md .local/environment.md
+chmod 600 .env AGENTS.md .local/environment.md
+```
+
+These copy commands preserve existing files. Fill in the local copies using verified values and approved secret-entry methods. The exact `.env` keys currently consumed by the PAF client are `agent_factory_url`, `agent_factory_username` and `agent_factory_password`; see [.env.example](.env.example).
+
+**The repository is not fully configurable through `.env` alone.** Local instructions and the worksheet do not override the SQLcl path, certificate pin or database/profile assertions embedded in the helpers. Follow the setup guide's compatibility table before automation. Database passwords, wallets, provider keys and connection registrations require separate configuration.
+
+### Starter prompt for Codex
+
+Open the checkout and provide this prompt:
+
+```text
+Read README.md and docs/setup/README.md for the complete environment setup.
+Inspect local tools without printing credentials. Preserve existing files.
+Create missing AGENTS.md, .env and .local/environment.md from their templates.
+Discover the bundled SQLcl path and record verified nonsecret local settings.
+Review all required PAF, database, wallet, TLS, model, Select AI and flow fields
+in the handoff worksheet. Ask for missing target values and access details;
+leave passwords/keys for me to enter locally through approved secret methods.
+Identify helper constants that need adaptation; don't bypass identity or TLS
+checks. Do not provision resources, reset credentials or run model-backed tests
+as part of local bootstrap. Report readiness and remaining setup by layer.
+```
+
+Codex discovers `AGENTS.md` when it starts a run/session. After creating or changing it, start a new session and ask which instruction files were loaded. Explicitly direct the first setup session to read the README and setup guide. See [OpenAI's AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+
+To check that local files remain untracked:
+
+```bash
+git check-ignore -v AGENTS.md .env .local/
+git ls-files -- AGENTS.md .env .local/
+```
+
+The second command should print nothing. Keep wallets, exports, live query results and AI/session traces under `.local/` or the approved secret location. No copied Codex login, global settings or session history is required. The full guide provides the ordered connection checks and reconnect checklist.
+
 ## Database setup and tooling
 
 For the current Select AI path, follow the [complete LiveLab](docs/livelab/README.md). It includes:
@@ -128,6 +198,10 @@ Keep passwords, wallets, connection exports, live query results and diagnostic l
 | `scripts/test_select_ai.py` | Earlier direct Select AI flow regression |
 | `docs/legacy-plsql/README.md` | Legacy PL/SQL architecture, setup and verification |
 | `tests/paf/` | Prompts, reviewed reports and investigations |
+| `docs/setup/README.md` | Complete contributor setup, connection and reconnect guide |
+| `docs/templates/environment-handoff.example.md` | Nonsecret environment handoff worksheet |
+| `docs/templates/AGENTS.local.example.md` | Portable template for ignored local agent instructions |
+| `.env.example` | Placeholder PAF configuration keys |
 | `.local/` | Ignored private credentials, responses and diagnostics |
 
 To regenerate Word documents from the workshop Markdown and appendices:
