@@ -41,7 +41,7 @@ The project helper `scripts/db.py` handles the original account/package setup us
 
 The helper's provisioning operation creates both the runtime and schema-only owner accounts; it is not a Select AI-only provisioning operation. Package installation and discovery details are documented in the [earlier Agent Builder guide](../agent-builder.md) and [same-schema compatibility notes](../same-schema-discovery-test.md).
 
-Use the SQLcl installation required by [AGENTS.md](../../AGENTS.md):
+Use the SQLcl bundled with the Oracle SQL Developer extension. The configured project environment uses:
 
 ```text
 /home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql

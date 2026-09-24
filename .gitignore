@@ -6,3 +6,6 @@ __pycache__/
 Wallet_*.zip
 *.p12
 *.sso
+
+# Environment-specific local agent instructions
+/AGENTS.md

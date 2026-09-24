@@ -107,7 +107,7 @@ For the current Select AI path, follow the [complete LiveLab](docs/livelab/READM
 - [First-time monitoring grants and views](docs/livelab/files/prepare-monitoring.sql), run as ADMIN against an explicitly checked database with an existing runtime account.
 - [Runtime view verification](docs/livelab/files/verify-monitoring.sql), run as DB_HEALTH_AGENT.
 
-Use the SQLcl bundled with the Oracle SQL Developer extension, as required by [AGENTS.md](AGENTS.md):
+Use the SQLcl bundled with the Oracle SQL Developer extension. The configured project environment uses:
 
 ```text
 /home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql
