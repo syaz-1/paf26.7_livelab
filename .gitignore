@@ -1,0 +1,8 @@
+.local/
+__pycache__/
+*.pyc
+*.log
+.env
+Wallet_*.zip
+*.p12
+*.sso

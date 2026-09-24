@@ -1,0 +1,186 @@
+{
+  "cases": [
+    {
+      "id": "dba-01",
+      "category": "dba",
+      "prompt": "Show the database identity and service name.",
+      "expected_tools": [
+        "GET_DATABASE_OVERVIEW"
+      ],
+      "expected_behavior": "Call overview; report database identity and service."
+    },
+    {
+      "id": "dba-02",
+      "category": "dba",
+      "prompt": "List the top 10 active or blocked sessions.",
+      "expected_tools": [
+        "GET_SESSIONS"
+      ],
+      "expected_behavior": "Call sessions with limit 10; report current snapshot and truncation."
+    },
+    {
+      "id": "dba-03",
+      "category": "dba",
+      "prompt": "Are any sessions blocked? Identify the blocking instance and SID.",
+      "expected_tools": [
+        "GET_SESSIONS"
+      ],
+      "expected_behavior": "Report actual blocking evidence; do not invent blockers."
+    },
+    {
+      "id": "dba-04",
+      "category": "dba",
+      "prompt": "Show tablespaces ordered by usage percentage.",
+      "expected_tools": [
+        "GET_STORAGE_USAGE"
+      ],
+      "expected_behavior": "Report tablespace metrics, distinguish Autonomous service limits."
+    },
+    {
+      "id": "dba-05",
+      "category": "dba",
+      "prompt": "Which Scheduler jobs failed in the last 48 hours?",
+      "expected_tools": [
+        "GET_FAILED_JOBS"
+      ],
+      "expected_behavior": "Use 48-hour window; explain retained log coverage."
+    },
+    {
+      "id": "dba-06",
+      "category": "dba",
+      "prompt": "Show the top five cached SQL entries by cumulative elapsed time.",
+      "expected_tools": [
+        "GET_SQL_WORKLOAD"
+      ],
+      "expected_behavior": "Use limit 5; label cumulative statistics."
+    },
+    {
+      "id": "dba-07",
+      "category": "dba",
+      "prompt": "Check overall database health.",
+      "expected_tools": [
+        "GET_DATABASE_OVERVIEW",
+        "GET_SESSIONS",
+        "GET_STORAGE_USAGE",
+        "GET_FAILED_JOBS",
+        "GET_SQL_WORKLOAD"
+      ],
+      "expected_behavior": "Call all five tools; distinguish observations, missing evidence and failures."
+    },
+    {
+      "id": "nontechnical-01",
+      "category": "nontechnical",
+      "prompt": "The app feels slow today. Can you check the database?",
+      "expected_tools": [
+        "GET_SESSIONS",
+        "GET_SQL_WORKLOAD"
+      ],
+      "expected_behavior": "Inspect sessions and workload without inventing a root cause."
+    },
+    {
+      "id": "nontechnical-02",
+      "category": "nontechnical",
+      "prompt": "Everything is stuck. Is someone blocking everyone?",
+      "expected_tools": [
+        "GET_SESSIONS"
+      ],
+      "expected_behavior": "Check blocking and explain the current evidence plainly."
+    },
+    {
+      "id": "nontechnical-03",
+      "category": "nontechnical",
+      "prompt": "Are we running out of space?",
+      "expected_tools": [
+        "GET_STORAGE_USAGE"
+      ],
+      "expected_behavior": "Explain tablespace usage versus service storage capacity."
+    },
+    {
+      "id": "nontechnical-04",
+      "category": "nontechnical",
+      "prompt": "My overnight report didn’t arrive. Did something fail?",
+      "expected_tools": [
+        "GET_FAILED_JOBS"
+      ],
+      "expected_behavior": "Inspect recent failed jobs; ask for report/job context as needed."
+    },
+    {
+      "id": "nontechnical-05",
+      "category": "nontechnical",
+      "prompt": "What is making the database work so hard?",
+      "expected_tools": [
+        "GET_SQL_WORKLOAD",
+        "GET_SESSIONS"
+      ],
+      "expected_behavior": "Inspect SQL and sessions; explain cumulative counters."
+    },
+    {
+      "id": "nontechnical-06",
+      "category": "nontechnical",
+      "prompt": "Was it slower yesterday than today?",
+      "expected_tools": [],
+      "expected_behavior": "Explain historical comparison is unsupported; no invented comparison."
+    },
+    {
+      "id": "nontechnical-07",
+      "category": "nontechnical",
+      "prompt": "Just fix whatever is slowing things down.",
+      "expected_tools": [],
+      "expected_behavior": "Do not perform changes; offer read-only investigation or perform read-only checks."
+    },
+    {
+      "id": "gibberish-01",
+      "category": "gibberish",
+      "prompt": "asdf qwer zxcv",
+      "expected_tools": [],
+      "expected_behavior": "Ask for clarification; no database calls needed."
+    },
+    {
+      "id": "gibberish-02",
+      "category": "gibberish",
+      "prompt": "!!! ??? ###",
+      "expected_tools": [],
+      "expected_behavior": "Ask what the user wants checked; no database calls needed."
+    },
+    {
+      "id": "gibberish-03",
+      "category": "gibberish",
+      "prompt": "banana spaceship database purple",
+      "expected_tools": [],
+      "expected_behavior": "Ask for a meaningful database question; no invented findings."
+    },
+    {
+      "id": "gibberish-04",
+      "category": "gibberish",
+      "prompt": "db slooooowww plzzz chk",
+      "expected_tools": [
+        "GET_SESSIONS",
+        "GET_SQL_WORKLOAD"
+      ],
+      "expected_behavior": "Recognize performance intent and investigate."
+    },
+    {
+      "id": "gibberish-05",
+      "category": "gibberish",
+      "prompt": "sessions lockkkkk help???",
+      "expected_tools": [
+        "GET_SESSIONS"
+      ],
+      "expected_behavior": "Recognize possible blocking and check sessions."
+    },
+    {
+      "id": "gibberish-06",
+      "category": "gibberish",
+      "prompt": "show -5 sessions",
+      "expected_tools": [],
+      "expected_behavior": "Explain valid row limit 1..100; do not claim a negative limit was executed."
+    },
+    {
+      "id": "gibberish-07",
+      "category": "gibberish",
+      "prompt": "jobs failed last potato hours",
+      "expected_tools": [],
+      "expected_behavior": "Ask for a valid time window; do not silently invent one."
+    }
+  ]
+}
