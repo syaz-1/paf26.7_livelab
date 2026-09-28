@@ -4,15 +4,22 @@ from pathlib import Path
 import re
 import argparse
 import zipfile
+import struct
 from xml.sax.saxutils import escape, quoteattr
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--paf-only', action='store_true', help='Export the UI-only workshop with a prepared database')
+parser.add_argument('--private-evidence', action='store_true', help='PAF-only: include local live-answer screenshots and write only under ignored .local/')
 args = parser.parse_args()
+if args.private_evidence and not args.paf_only:
+    parser.error('--private-evidence requires --paf-only')
 LAB = ROOT / ('docs/livelab-paf-only' if args.paf_only else 'docs/livelab')
 OUT = LAB / ('ADB_Health_Monitoring_Agent_PAF_Only_LiveLab.docx' if args.paf_only else 'ADB_Health_Monitoring_Agent_LiveLab.docx')
+PRIVATE = ROOT / '.local/paf-screenshots'
+if args.private_evidence:
+    OUT = PRIVATE / 'ADB_Health_Monitoring_Agent_PAF_Only_LiveLab_PRIVATE.docx'
 APPENDICES = ([('A','Complete Agent instructions','monitoring-agent-instructions.txt'), ('B','Validation prompts','test-prompts.md')]
               if args.paf_only else [('A','Database preparation SQL','prepare-monitoring.sql'),('B','Runtime verification SQL','verify-monitoring.sql'),('C','Complete Agent instructions','monitoring-agent-instructions.txt'),('D','Validation prompts','test-prompts.md')])
 NAVIGATION = (['Confirm the prepared environment','Configure the PAF database connection','Configure the Agent model','Configure the Select AI profile','Build the custom Agent flow','Test the flow in Playground','Save, troubleshoot and hand over']
@@ -20,6 +27,7 @@ NAVIGATION = (['Confirm the prepared environment','Configure the PAF database co
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
 relationships = []
+images = []
 bookmark_number = 0
 anchors = {'files/'+file:'appendix_'+letter.lower() for letter, title, file in APPENDICES}
 
@@ -79,11 +87,49 @@ def table(rows):
     return ''.join(parts)
 
 
+def screenshot(caption, relative_path):
+    """Embed a local PNG, preserving aspect ratio and keeping its caption attached."""
+    path = (LAB / relative_path).resolve()
+    if not path.is_relative_to(LAB.resolve()):
+        raise ValueError('Screenshot must be inside the selected lab directory')
+    private_path = PRIVATE / (path.stem + '-private.png')
+    if args.private_evidence and private_path.is_file():
+        path = private_path
+        caption = caption.replace('live answer masked', 'live answer shown in this private copy')
+        caption = caption.replace('the live database identity is masked in this distributable capture', 'the live database identity is visible in this private copy')
+    data = path.read_bytes()
+    if data[:8] != b'\x89PNG\r\n\x1a\n':
+        raise ValueError('Only PNG screenshots are supported: ' + relative_path)
+    width, height = struct.unpack('>II', data[16:24])
+    number = len(images) + 1
+    rid = 'rIdImage' + str(number)
+    target = 'media/screenshot' + str(number) + '.png'
+    images.append((rid, target, data))
+    cx = 6350000  # 10,000 twips: the document's content width.
+    cy = round(cx * height / width)
+    if cy > 6858000:
+        cx = round(cx * 6858000 / cy)
+        cy = 6858000
+    drawing = f'''<w:p><w:pPr><w:keepNext/></w:pPr><w:r><w:drawing>
+<wp:inline xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0">
+<wp:extent cx="{cx}" cy="{cy}"/><wp:docPr id="{number}" name="Screenshot {number}" descr={quoteattr(caption)}/>
+<wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>
+<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="{number}" name="Screenshot {number}"/><pic:cNvPicPr/></pic:nvPicPr>
+<pic:blipFill><a:blip r:embed="{rid}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="{cx}" cy="{cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>
+</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>'''
+    return drawing + paragraph(caption, 'TableText')
+
+
 def markdown(text,drop_title=False):
     lines=text.splitlines();parts=[];i=0
     while i<len(lines):
         line=lines[i];s=line.strip()
         if not s:i+=1;continue
+        img = re.fullmatch(r'!\[([^\]]*)\]\(([^)]+)\)', s)
+        if img:
+            parts.append(screenshot(img.group(1), img.group(2)));i+=1;continue
         if s.startswith('```'):
             i+=1
             while i<len(lines) and not lines[i].strip().startswith('```'):
@@ -123,6 +169,8 @@ body=[paragraph('ORACLE PRIVATE AGENT FACTORY','Subtitle'),
 for n,label in enumerate(NAVIGATION,1):
     body.append(f'<w:p><w:hyperlink w:anchor="lab_{n}">'+run(f'Lab {n}: {label}')+'</w:hyperlink></w:p>')
 body.append(paragraph('Workshop guide','Heading1',page_break=True))
+if args.private_evidence:
+    body.append(paragraph('PRIVATE EVIDENCE COPY — contains live monitoring answers. Keep outside version control and review before sharing. Account identifiers and credentials remain masked. The public-guide references to masked answers describe the distributable version; this copy substitutes the private response screenshots where available.','Heading2'))
 body.append(markdown((LAB/'README.md').read_text(),drop_title=True))
 for letter,title,file in APPENDICES:
     body.append(paragraph(f'Appendix {letter}: {title}','Heading1','appendix_'+letter.lower(),True))
@@ -157,17 +205,22 @@ rel_ns='http://schemas.openxmlformats.org/package/2006/relationships'
 rels=f'<Relationships xmlns="{rel_ns}">'
 for rid,kind,target in [('rIdStyles','styles','styles.xml'),('rIdHeader','header','header1.xml'),('rIdFooter','footer','footer1.xml')]:rels+=f'<Relationship Id="{rid}" Type="{R}/{kind}" Target="{target}"/>'
 for rid,target in relationships:rels+=f'<Relationship Id="{rid}" Type="{R}/hyperlink" Target={quoteattr(target)} TargetMode="External"/>'
+for rid,target,_ in images:rels+=f'<Relationship Id="{rid}" Type="{R}/image" Target={quoteattr(target)}/>'
 rels+='</Relationships>'
 content_types='''<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'''
 for part,kind in [('document','document.main'),('styles','styles'),('header1','header'),('footer1','footer')]:content_types+=f'<Override PartName="/word/{part}.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.{kind}+xml"/>'
 content_types+='</Types>'
+if images:
+    content_types = content_types.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>')
 files={'[Content_Types].xml':content_types,'_rels/.rels':f'<Relationships xmlns="{rel_ns}"><Relationship Id="rId1" Type="{R}/officeDocument" Target="word/document.xml"/></Relationships>',
 'word/document.xml':document,'word/styles.xml':styles,'word/_rels/document.xml.rels':rels,
 'word/header1.xml':f'<w:hdr xmlns:w="{W}">'+paragraph('DATABASE MONITORING AGENT | LIVELAB','TableText')+'</w:hdr>',
 'word/footer1.xml':f'<w:ftr xmlns:w="{W}"><w:p><w:pPr><w:jc w:val="right"/></w:pPr>'+run('Oracle Private Agent Factory  •  ')+ '<w:fldSimple w:instr="PAGE"/></w:p></w:ftr>'}
 for name,text in files.items():ET.fromstring(text)
+OUT.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(OUT,'w',zipfile.ZIP_DEFLATED) as z:
     for name,text in files.items():z.writestr(name,text.encode('utf-8'))
+    for _,target,data in images:z.writestr('word/'+target,data)
 with zipfile.ZipFile(OUT) as z:
     assert z.testzip() is None
     doc=ET.fromstring(z.read('word/document.xml'))
@@ -179,5 +232,8 @@ with zipfile.ZipFile(OUT) as z:
         if a:assert a in actual_anchors
     text=''.join(doc.itertext())
     for _, _, f in APPENDICES:assert f in text
+    for _,target,_ in images:assert 'word/'+target in z.namelist()
+if args.private_evidence:
+    OUT.chmod(0o600)
 print(OUT)
-print(f'Validated DOCX package: {OUT.stat().st_size:,} bytes; {len(actual_anchors)} navigation bookmarks.')
+print(f'Validated DOCX package: {OUT.stat().st_size:,} bytes; {len(actual_anchors)} navigation bookmarks; {len(images)} screenshots.')
