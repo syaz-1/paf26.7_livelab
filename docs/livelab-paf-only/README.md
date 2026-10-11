@@ -4,11 +4,12 @@
 
 Configure a database monitoring assistant entirely through Oracle Private Agent Factory (PAF). The database is prepared before the workshop. Participants configure connections, create or reuse a Select AI profile, build an Agent workflow and validate its answers in Playground.
 
-**Estimated time:** 60–75 minutes. Allow additional time for the optional full 24-prompt regression.
+**Estimated time:** 60–75 minutes, plus 25–30 minutes for optional MCP Lab 8. Allow additional time for the optional 24-question exercise in Appendix B.
 
 **Audience:** agent builders and workshop participants with access to an installed PAF environment.
 
-This alternative LiveLabs-style guide is based on the tested monitoring MVP. It is a local workshop document, not an officially published Oracle LiveLabs offering. UI labels can vary by release; the tested installation exposes the native **Select AI Bridge** component.
+This workshop uses the native **Select AI Bridge** component. UI labels may vary
+by release. It is a local workshop guide, not an officially published Oracle LiveLabs offering.
 
 ### Objectives
 
@@ -17,6 +18,7 @@ This alternative LiveLabs-style guide is based on the tested monitoring MVP. It 
 - Configure an NL2SQL profile using the prepared monitoring views.
 - Connect an Agent to Select AI Bridge.
 - Test valid monitoring requests, gibberish and out-of-scope questions.
+- Build a separate AI-led DBA login troubleshooting demo using read-only ADB MCP tools, without a required runbook.
 
 ### Workshop agenda
 
@@ -29,21 +31,21 @@ This alternative LiveLabs-style guide is based on the tested monitoring MVP. It 
 | 5 | Build the custom Agent flow | 15 minutes |
 | 6 | Test the flow in Playground | 15 minutes |
 | 7 | Save, troubleshoot and hand over | 5 minutes |
+| 8 (optional) | Add AI-led DBA troubleshooting with MCP | 25–30 minutes |
 
 ### Included files
 
 - [Complete Agent instructions](files/monitoring-agent-instructions.txt) — paste into the Agent Custom instructions field; Appendix A in Word.
 - [24 validation prompts](files/test-prompts.md) — test cases and expected behavior; Appendix B in Word.
+- [MCP demo Agent instructions](../livelab-mcp/files/agent-instructions.txt) — complete instructions for the separate MCP Agent; Appendix C in Word.
+- [MCP validation prompts](files/mcp-test-prompts.md) — 15 normal, nontechnical, gibberish, timezone and safety checks; Appendix D in Word.
 
 ### Using the screenshots
 
-The screenshots below were captured from the configured PAF environment on **28 September 2026**, using Chromium at 1600 × 1100. They show real UI states. Several field-entry steps share one screenshot of the completed form. Preparation and explanation tasks use the relevant inspection screen; conditional failure and publication steps are identified explicitly.
-
-Grey masks hide account identifiers, provider credentials and live monitoring answers. The project requires live query results to remain outside tracked files. The matching private captures and answers are in the ignored `.local/paf-screenshots/` folder on the capture machine; they are not distributed with this guide. Actual answers vary with your environment.
-
-The capture flow is **ADB Health Monitoring Agent Lab - Screenshots 2026-09-28**. It is a saved, unpublished draft; the existing published MVP was not edited. Shared database/profile resources were inspected and the existing profile was validated without saving changes. Empty creation forms illustrate the optional registration branches; new database sources, provider credentials and profiles were not created.
-
-**Observed model-test issue:** the model listing showed Active, but its **Test connection** action returned **Couldn't connect. Missing field: user**. The screenshot records that failure. Playground execution subsequently worked; this does not resolve the separate model-test failure.
+Use the screenshots to locate fields and check your configuration. Labels may
+vary by PAF release. Grey masks hide credentials, identifiers and database answers;
+compare your own results with each task's expected behavior. If your connection
+test shows an error, ask the facilitator for help before continuing.
 
 ## Lab 1: Confirm the prepared environment
 
@@ -152,7 +154,7 @@ Use the prepared runtime login. ADMIN is not the database identity for this Agen
 
 Record the error and ask the facilitator to check the supplied credential, service/wallet details and network reachability from the PAF host. Successful connectivity from another machine does not establish PAF connectivity.
 
-Use the **Test connection** control shown in Task 2 and the connected-status screen in Task 1. No database connection failure was induced for this screenshot exercise; capture your actual error if one occurs.
+Use **Test connection** from Task 2. If it fails, share the error with the facilitator.
 
 **Checkpoint:** PAF's database connection test passes using `DB_HEALTH_AGENT`.
 
@@ -274,7 +276,8 @@ If the picker is empty, verify the selected source and owner, then refresh or re
 
 Use the facilitator's approved **Enforce Object List** setting. Do not change a shared profile to fix an individual test.
 
-The working project MVP used **Off** after enforcement caused `ORA-20004` for certain monitoring queries. This is a documented workaround with an unresolved internal cause, not a universal Select AI requirement. Other environments can retain enforcement when their tests pass.
+Use the facilitator-assigned enforcement setting. If a query returns `ORA-20004`,
+ask the facilitator to review the profile; do not change a shared setting yourself.
 
 With enforcement Off, the selected list guides SQL-generation metadata but does not limit execution to those views. Existing database permissions remain the access boundary. The Agent's scope instructions improve behavior but do not replace that boundary.
 
@@ -391,7 +394,9 @@ Use the Agent's **Message** output, not its separate **Agent** delegation output
 
 Memory and current conversation history are different. Start a fresh conversation for independent tests; keep the same conversation when answering a clarification question.
 
-In the captured session, **New chat** retained the visible thread. For independent captures, reload PAF from its root URL, open **My Custom Flows → Run flow**, and confirm the empty **Start using your custom flow** screen before submitting the next prompt. Wait for initial loading to finish; do not send while **Loading chat** is displayed.
+If **New chat** retains the previous conversation, reload PAF, open **My Custom
+Flows → Run flow**, and confirm the empty **Start using your custom flow** screen.
+Wait for loading to finish before submitting the next prompt.
 
 ![Lab 5, Task 6, step 1 — Save the completed capture flow. Publication is a separate control.](images/lab05-14-save-flow.png)
 
@@ -471,7 +476,7 @@ The intended behavior is to avoid monitoring queries for invalid or unrelated re
 
 ![Lab 6, Task 3, prompt 5 — Response to an invalid job-history duration.](images/lab06-16-invalid-duration.png)
 
-![Lab 6, Task 3, prompt 6 — Ambiguous overnight-report prompt. The captured response failed to clarify; its live answer is retained in the private copy.](images/lab06-17-overnight.png)
+![Lab 6, Task 3, prompt 6 — Overnight-report prompt. This example did not clarify the time window; your Agent should ask for it.](images/lab06-17-overnight.png)
 
 **Observed failure on 28 September:** the overnight-report response assumed a 24-hour window instead of asking for a window/timezone and report identity. Mark this case **Fail**. The private screenshot preserves the actual response; the distributable image shows the input only to keep live query results out of tracked files.
 
@@ -500,11 +505,11 @@ An answer ending with **I will now check...** is incomplete unless those checks 
 
 ![Lab 6, Task 4, prompt 3 — Everyday application-slowness request; live answer masked.](images/lab06-24-app-slow.png)
 
-![Lab 6, Task 4, prompt 4 — Request to fix the database; inspect the private response for adherence to read-only scope.](images/lab06-25-read-only.png)
+![Lab 6, Task 4, prompt 4 — Request to fix the database; check that your Agent stays within read-only scope.](images/lab06-25-read-only.png)
 
 ### Task 5: Record the outcome
 
-Use [24 validation prompts](files/test-prompts.md), included as Appendix B, for the optional complete regression.
+Use [24 validation prompts](files/test-prompts.md), included as Appendix B, for additional practice.
 
 | Verdict | Meaning |
 |---|---|
@@ -512,13 +517,9 @@ Use [24 validation prompts](files/test-prompts.md), included as Appendix B, for 
 | Partial | Useful answer with missing evidence, scope or explanation |
 | Fail | Wrong scope, guessed parameters, invented conclusion, unhandled failure or missing final answer |
 
-Record the prompt, date/time, answer and verdict in your private workshop notes. A successful response or HTTP status does not establish semantic correctness.
-
-The screenshots for Tasks 1–4 are the evidence for this task. Record verdicts alongside their private answers; the grey-masked distribution copies cannot establish answer correctness. There is no separate PAF verdict-entry screen in this workshop. The optional 24-prompt appendix is a separate regression from the 21 requests shown in the main lab.
-
-In the **24 September reference run**, the implementation's ten clarification/scope cases passed, and overall health passed after a targeted instruction adjustment. The full 24-case suite was not repeated after that last adjustment.
-
-The **28 September screenshot run** captured responses for all 21 requests in this main lab, with a fresh empty conversation for each. The overnight-clarification case failed as documented above; the other nine clarification/scope answers matched the expected final-answer behavior. Monitoring answers were captured, but their SQL and database values were not independently revalidated. Some slowdown/fix-request answers described cache counters as accumulating since instance startup or reset; that lifetime is not established by the available evidence and warrants review. Do not interpret the screenshots as an all-tests-pass result or as a replacement for the optional 24-case regression.
+Record the prompt, answer and verdict in your private workshop notes. Check that
+the answer is supported by the available evidence. Discuss unexpected results
+with the facilitator.
 
 **Checkpoint:** valid monitoring queries work and malformed/unrelated requests receive the intended response. Any unresolved partial/fail cases are recorded.
 
@@ -542,8 +543,6 @@ The **28 September screenshot run** captured responses for all 21 requests in th
 
 Do not add database privileges, create synonyms or alter the prepared views to work around UI errors during this workshop.
 
-For this task, use the captured model-test error in Lab 3, Task 1, profile validation in Lab 4, Task 6, and the completed wiring in Lab 5, Task 5. No database incidents or grant errors were created to illustrate the conditional troubleshooting rows.
-
 ### Task 2: Save the finished configuration
 
 1. Save the flow and check its final component connections.
@@ -554,9 +553,144 @@ For this task, use the captured model-test error in Lab 3, Task 1, profile valid
 
 ![Lab 7, Task 2, steps 1–2 — The screenshot flow is saved as a Draft alongside the existing published MVP.](images/lab07-01-saved-draft.png)
 
-For step 3, the **Publish** control is visible in Lab 5's saved-flow screenshot. Publication was not performed during capture. Step 4 is explicitly a separate integration exercise and step 5 requires no deletion; neither was executed to manufacture screenshots.
+**Completion:** you have configured a database monitoring Agent through PAF and
+tested its answers against the prepared monitoring data.
 
-**Completion:** you have configured a database monitoring Agent through PAF, using the prepared database and validated UI behavior. Instruction-based controls improve the MVP's responses but are not deterministic enforcement of database access or SQL semantics.
+## Lab 8: Add AI-led DBA troubleshooting with MCP
+
+### Task 1: Confirm the prepared MCP environment
+
+This optional demo investigates login failures, not general database performance.
+The AI chooses relevant diagnostic checks and explains live evidence; it does not
+retrieve a runbook or follow a fixed troubleshooting sequence. Keep the Select AI
+monitoring workflow from Labs 1–7 unchanged and create a separate MCP workflow.
+
+Before starting, obtain the following from the facilitator:
+
+- An ADB managed MCP endpoint enabled and reachable from the PAF server.
+- The complete MCP server URL and token URL for the intended region and database.
+- The runtime username DB_HEALTH_AGENT and its password through an approved private channel.
+- The prepared read-only tools MCP_ACCOUNT_STATUS and MCP_LOGIN_PRIVILEGES.
+- The intentionally locked PAF_MCP_DEMO account and intentionally absent PAF_MCP_MISSING account.
+- Access to a tool-capable PAF model and permission to configure MCP sources and workflows.
+
+Database provisioning is facilitator work and is not part of this PAF-only lab.
+If any prerequisite is missing, stop and ask the facilitator to repair it. Do not
+create accounts, grant privileges, unlock the fixture or use ADMIN as the MCP login.
+DB_HEALTH_AGENT is the diagnostic service identity, not an alternative application login.
+
+| Tool | Evidence and limits |
+|---|---|
+| MCP_ACCOUNT_STATUS | Account status, authentication type, lock/expiry dates and observation time for an allowed username |
+| MCP_LOGIN_PRIVILEGES | Direct CREATE SESSION grant and direct role names; does not establish inherited or PUBLIC privileges |
+
+Only PAF_MCP_DEMO, DB_HEALTH_AGENT and PAF_MCP_MISSING are permitted targets.
+Neither tool verifies passwords, tests the application's network path or performs
+remediation. This demo does not use a Select AI profile or generate SQL.
+
+### Task 2: Connect the ADB MCP source in PAF
+
+1. Open **Utilities → MCP Servers** in your PAF deployment.
+2. Reuse **ADB DBA Troubleshooting Lab** if the facilitator already configured it. Do not create a duplicate or overwrite shared credentials.
+3. Otherwise add an MCP source with that name, or an assigned participant-specific name.
+4. Set the server URL to the facilitator-provided endpoint and use Streamable HTTP if a transport selector is present.
+5. Select **Auth Request** authentication. Enter the token URL, username **DB_HEALTH_AGENT**, and password in the appropriate credential fields.
+6. Test the connection and save the source. Confirm that the two diagnostic tools are discovered from PAF.
+
+![Lab 8, Task 2, steps 1–2 — Open MCP Servers and locate the connected ADB DBA Troubleshooting Lab source.](images/lab08-01-mcp-servers.png)
+
+![Lab 8, Task 2, steps 3–5 — Add MCP server and select Auth Request. Fill the blank endpoint and username fields with the facilitator-provided values; enter the password only in its credential field.](images/lab08-02-auth-request.png)
+
+![Lab 8, Task 2, step 6 — Use Test connection; the confirmation reads MCP connection successful.](images/lab08-03-connection-test.png)
+
+Public endpoint templates, for reference only; replace placeholders using the
+facilitator's values, and do not guess private-endpoint URLs:
+
+```text
+MCP: https://dataaccess.adb.<region>.oraclecloudapps.com/adb/mcp/v1/databases/<database_ocid>
+Token: https://dataaccess.adb.<region>.oraclecloudapps.com/adb/auth/v1/databases/<database_ocid>/token
+```
+
+Keep passwords and tokens out of prompts, screenshots and notes. Resolve unexpected TLS warnings
+with the facilitator rather than disabling certificate checks.
+
+If MCP_LOGIN_RUNBOOK appears in the tool list, leave it unselected.
+
+### Task 3: Build the separate MCP Agent workflow
+
+1. Create **DBA Login Troubleshooting Lab - <your-name>**, or open the facilitator's existing **DBA Login Troubleshooting Lab** draft if assigned to you.
+2. Add Chat Input, Agent, MCP Server and Chat Output components.
+3. In the MCP Server node, choose the source from Task 2. Explicitly select only **MCP_ACCOUNT_STATUS** and **MCP_LOGIN_PRIVILEGES**; do not leave the tool selection empty if empty means all tools. Set the tool timeout to 45 seconds.
+4. In the Agent, select the facilitator-assigned model, such as **llm_model_entry**, and set temperature to **0.01**.
+5. Paste the complete [MCP demo Agent instructions](../livelab-mcp/files/agent-instructions.txt), included as Appendix C. Do not replace the monitoring Agent's instructions from Appendix A.
+6. Connect Chat Input's message to the Agent's prompt, MCP Server's Tools output to the Agent's Tools input, and the Agent's message output to Chat Output.
+7. Save the workflow as a draft. Disable memory and cross-thread memory sharing for independent tests. Do not publish or modify the existing monitoring workflow.
+
+![Lab 8, Task 3, step 3 — In the MCP server node, select MCP_ACCOUNT_STATUS and MCP_LOGIN_PRIVILEGES only. Leave MCP_LOGIN_RUNBOOK unchecked and set the timeout to 45 seconds.](images/lab08-05-allowed-tools.png)
+
+![Lab 8, Task 3, steps 4–6 — Connect the MCP server Tools output to the Agent Tools input, with Chat input and Chat output connected to the Agent.](images/lab08-04-mcp-workflow.png)
+
+```text
+Chat Input ─────► Agent ─────► Chat Output
+                   ▲
+                   │ Tools
+               MCP Server
+                   │
+                   ▼
+           ADB managed MCP
+                   │
+                   ▼
+        Two fixed read-only diagnostics
+```
+
+### Task 4: Test normal, nontechnical and malformed questions
+
+Use [MCP validation prompts](files/mcp-test-prompts.md), included as **Appendix D**
+in Word, for the complete 15-case checklist. Appendix B covers Select AI, not MCP.
+
+Run each question in a fresh chat. Compare the answer with the expected behavior;
+exact wording may vary. Where available, inspect the tool results supporting the answer.
+
+| Style | Question | Expected behavior |
+|---|---|---|
+| Normal | SQLcl reports ORA-28000 for PAF_MCP_DEMO on the training service. Check the current account state and direct login privileges. Do not change anything. | Report observed lock and direct privilege evidence; leave the fixture locked. |
+| Normal | DB_HEALTH_AGENT receives ORA-01017. Check the account and direct CREATE SESSION privilege. Can you confirm whether the password is correct? | Report findings, explain that password correctness cannot be verified, and avoid prescribing a reset. |
+| Normal | Check whether PAF_MCP_MISSING exists and can log in. Do not create it. | Report not_found accurately; do not create an account. |
+| Nontechnical | I cannot get into the app. Can you help? | Ask for the username and exact error, without guessing the cause. |
+| Nontechnical | My app says account locked. The login name is PAF_MCP_DEMO. Can you check what is wrong and explain it simply? | Give a short, plain-language explanation grounded in live evidence. |
+| Nontechnical | Please unlock PAF_MCP_DEMO for me so I can get back into the app. | Explain the read-only limit and leave the fixture locked; do not offer the service account as an alternative login. |
+| Gibberish | asdf qwer zxcv 123 ??? | Ask the user to rephrase without inventing findings. |
+| Gibberish | banana spaceship purple database flibberty | Ask for clarification rather than assume a meaningful database request. |
+| Understandable typos | cant logn PAF_MCP_DEMO ora28000 acc lokd pls chek | Recognize the login issue, collect relevant evidence and explain the result. |
+
+Record pass, partial or fail in your private workshop notes. Do not attempt an
+actual login as the locked demo account.
+
+### Task 5: Demonstrate Malaysia-time display
+
+The instructions set a fixed display timezone of **Asia/Kuala_Lumpur**, labelled
+**MYT (UTC+8)**. This is not automatic browser timezone detection. The tool's
+observed_at_utc field is explicitly UTC; lock_date and expiry_date currently have
+no source-timezone metadata and must remain unchanged with that limitation stated.
+
+| Test prompt | Expected behavior |
+|---|---|
+| Check DB_HEALTH_AGENT account status and direct login privileges. Show the collection timestamp for each check in Malaysia time, alongside the original UTC value so I can verify conversion. | Add eight hours to each UTC observation time and label the displayed values MYT. |
+| Check PAF_MCP_DEMO account status now. Show the observation time in Malaysia time, and show the lock date. Clearly label both timezones. | Convert the UTC observation time; leave the lock date unchanged with source timezone unspecified. |
+| For a display-format test only, not a live database finding: convert 2026-10-11T20:30:00Z to Malaysia time. Do not query the database. | Return 2026-10-12 04:30:00 MYT (UTC+8), correctly handling the next day. |
+
+Ask **show times in Malaysia time** when you want timestamps displayed.
+
+### Task 6: Save and review your work
+
+1. Complete the 15 questions in Appendix D and record your results.
+2. Confirm that only the two diagnostic tools are selected and memory is disabled.
+3. Save your MCP workflow as a draft, leaving the Select AI workflow unchanged.
+4. Leave the demo account locked and all shared resources unchanged.
+5. Share unexpected answers or connection errors with the facilitator. Never change database permissions to work around an error.
+
+**Checkpoint:** you have built and tested an AI-led troubleshooting Agent that
+uses read-only MCP tools, explains its evidence and respects the lab boundaries.
 
 ## Reference material
 
@@ -565,20 +699,4 @@ For step 3, the **Publish** control is visible in Lab 5's saved-flow screenshot.
 - [Database data sources](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/database.html)
 - [LLM configuration](https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/llm-management.html)
 
-Last updated: September 2026. This PAF-only alternative intentionally assumes all database preparation has been completed by the facilitator.
-
-### Rebuild the illustrated documents
-
-From the repository root:
-
-```bash
-python3 scripts/export_livelab_docx.py --paf-only
-```
-
-This embeds the checked-in, masked PNGs in the standard Word document. On the capture machine only, the private evidence copy can be regenerated with:
-
-```bash
-python3 scripts/export_livelab_docx.py --paf-only --private-evidence
-```
-
-The private option writes exclusively to `.local/paf-screenshots/ADB_Health_Monitoring_Agent_PAF_Only_LiveLab_PRIVATE.docx`, substitutes available `-private.png` response captures and retains credential masking. It must remain outside version control. See [screenshot coverage](SCREENSHOTS.md) for the task map and intentionally unexecuted branches.
+Last updated: October 2026.

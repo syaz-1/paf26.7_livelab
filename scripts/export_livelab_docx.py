@@ -20,9 +20,9 @@ OUT = LAB / ('ADB_Health_Monitoring_Agent_PAF_Only_LiveLab.docx' if args.paf_onl
 PRIVATE = ROOT / '.local/paf-screenshots'
 if args.private_evidence:
     OUT = PRIVATE / 'ADB_Health_Monitoring_Agent_PAF_Only_LiveLab_PRIVATE.docx'
-APPENDICES = ([('A','Complete Agent instructions','monitoring-agent-instructions.txt'), ('B','Validation prompts','test-prompts.md')]
+APPENDICES = ([('A','Complete Agent instructions','monitoring-agent-instructions.txt'), ('B','Select AI validation prompts','test-prompts.md'), ('C','MCP demo Agent instructions','../../livelab-mcp/files/agent-instructions.txt'), ('D','MCP validation prompts','mcp-test-prompts.md')]
               if args.paf_only else [('A','Database preparation SQL','prepare-monitoring.sql'),('B','Runtime verification SQL','verify-monitoring.sql'),('C','Complete Agent instructions','monitoring-agent-instructions.txt'),('D','Validation prompts','test-prompts.md')])
-NAVIGATION = (['Confirm the prepared environment','Configure the PAF database connection','Configure the Agent model','Configure the Select AI profile','Build the custom Agent flow','Test the flow in Playground','Save, troubleshoot and hand over']
+NAVIGATION = (['Confirm the prepared environment','Configure the PAF database connection','Configure the Agent model','Configure the Select AI profile','Build the custom Agent flow','Test the flow in Playground','Save, troubleshoot and hand over','Add AI-led DBA troubleshooting with MCP']
               if args.paf_only else ['Prepare the environment','Prepare monitoring views','Configure connections','Configure Select AI','Build the Agent','Test in Playground','Troubleshoot and hand over'])
 W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
@@ -30,6 +30,8 @@ relationships = []
 images = []
 bookmark_number = 0
 anchors = {'files/'+file:'appendix_'+letter.lower() for letter, title, file in APPENDICES}
+if args.paf_only:
+    anchors['../livelab-mcp/files/agent-instructions.txt'] = 'appendix_c'
 
 
 def run(text, bold=False, code=False):
@@ -161,13 +163,16 @@ def markdown(text,drop_title=False):
 body=[paragraph('ORACLE PRIVATE AGENT FACTORY','Subtitle'),
       paragraph('Build a Database\nMonitoring Agent'.replace('\n',' '),'Title'),
       paragraph('PAF Configuration Only' if args.paf_only else 'Step-by-step LiveLab','Subtitle'),
-      paragraph('Prepared database • PAF connections • Select AI profile • Agent Builder • Validation' if args.paf_only else 'Database setup • Select AI profile • Agent Builder • Validation'),
-      paragraph('September 2026 | Workshop guide and complete appendices'),
-      paragraph('Estimated duration: 60–75 minutes. Database preparation completed by the facilitator.' if args.paf_only else 'Estimated duration: 90–120 minutes. Existing-environment fast path: 45–60 minutes.'),
+      paragraph('Prepared database • Select AI • Agent Builder • MCP troubleshooting • Validation' if args.paf_only else 'Database setup • Select AI profile • Agent Builder • Validation'),
+      paragraph(('October 2026' if args.paf_only else 'September 2026') + ' | Workshop guide and complete appendices'),
+      paragraph('Estimated duration: 60–75 minutes, plus 25–30 minutes for optional MCP Lab 8. Database preparation completed by the facilitator.' if args.paf_only else 'Estimated duration: 90–120 minutes. Existing-environment fast path: 45–60 minutes.'),
       paragraph('Local workshop package based on the tested monitoring MVP; not an officially published Oracle LiveLabs offering.'),
       paragraph('Workshop navigation','Heading2')]
 for n,label in enumerate(NAVIGATION,1):
     body.append(f'<w:p><w:hyperlink w:anchor="lab_{n}">'+run(f'Lab {n}: {label}')+'</w:hyperlink></w:p>')
+body.append(paragraph('Appendices','Heading2'))
+for letter, title, _ in APPENDICES:
+    body.append(f'<w:p><w:hyperlink w:anchor="appendix_{letter.lower()}">'+run(f'Appendix {letter}: {title}')+'</w:hyperlink></w:p>')
 body.append(paragraph('Workshop guide','Heading1',page_break=True))
 if args.private_evidence:
     body.append(paragraph('PRIVATE EVIDENCE COPY — contains live monitoring answers. Keep outside version control and review before sharing. Account identifiers and credentials remain masked. The public-guide references to masked answers describe the distributable version; this copy substitutes the private response screenshots where available.','Heading2'))
@@ -226,7 +231,7 @@ with zipfile.ZipFile(OUT) as z:
     doc=ET.fromstring(z.read('word/document.xml'))
     actual_anchors={e.attrib['{'+W+'}name'] for e in doc.iter('{'+W+'}bookmarkStart')}
     assert set(anchors.values())<=actual_anchors
-    assert {f'lab_{n}' for n in range(1,8)}<=actual_anchors
+    assert {f'lab_{n}' for n in range(1,len(NAVIGATION)+1)}<=actual_anchors
     for e in doc.iter('{'+W+'}hyperlink'):
         a=e.attrib.get('{'+W+'}anchor')
         if a:assert a in actual_anchors

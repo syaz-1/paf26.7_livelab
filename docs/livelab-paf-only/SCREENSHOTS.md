@@ -59,7 +59,28 @@ All 21 main-lab prompts produced a rendered response. Each captured test began w
 
 The complete response text and timestamps are saved only in `.local/paf-screenshots/results.json` on the capture machine. Existing September 24 test reports remain historical evidence and were not rewritten.
 
-## Regeneration
+## MCP screenshot addition — 11 October 2026
+
+Lab 8 adds five real PAF captures at 1600 × 1100. Browser plugin was unavailable;
+the installed Playwright/Chromium runtime was used with the user-approved server
+certificate pin verified before login and its public-key pin supplied to Chromium.
+
+| Task | Capture |
+|---|---|
+| 8 / 2: Source list | lab08-01-mcp-servers.png — MCP Servers navigation and connected training source |
+| 8 / 2: Authentication form | lab08-02-auth-request.png — unsaved Add MCP server form with Auth Request selected; endpoint and username fields intentionally blank |
+| 8 / 2: Connection test | lab08-03-connection-test.png — actual successful test of the existing source |
+| 8 / 3: Tool selection | lab08-05-allowed-tools.png — two diagnostic tools checked, runbook unchecked, timeout 45 seconds |
+| 8 / 3: Wiring | lab08-04-mcp-workflow.png — existing draft graph and Agent settings |
+
+Signed-in identity, endpoint identifiers and password fields are masked. No live
+query results were captured. The add form was cancelled; no duplicate source was
+created, no workflow settings were saved and nothing was published. Page identity,
+rendered content, source-test interaction and the five images were checked; no
+page-level JavaScript exceptions were observed. Mobile layout was not tested.
+These additions bring the document to 69 embedded screenshot positions.
+
+## Regeneration commands
 
 ```bash
 python3 scripts/export_livelab_docx.py --paf-only

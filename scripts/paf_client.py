@@ -9,7 +9,7 @@ from http.cookies import SimpleCookie
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
-KNOWN_CERT_SHA256 = 'bb8e90b5237d089f242109b8ec4dd3be24ee7b427d10907c1eb2b8802fde6b62'
+KNOWN_CERT_SHA256 = '1408131f5612db54194d6b26e2b100a4a743ccc1594cadf0d49665f3a4d9bc53'
 
 
 def read_env():
@@ -44,8 +44,8 @@ class Client:
     def request(self, method, path, data=None, login=False, timeout=180, raw_response=False):
         if not path.startswith('/agentFactory/') or '\r' in path or '\n' in path:
             raise ValueError('Request must remain within Agent Factory.')
-        # This installation uses the self-signed certificate independently inspected
-        # on 2026-09-24. Pin its fingerprint rather than trusting any certificate.
+        # Training server certificate explicitly trusted by the user on 2026-10-11.
+        # Keep checking the exact fingerprint before transmitting credentials.
         connection = http.client.HTTPSConnection(self.host, self.port,
             context=ssl._create_unverified_context(), timeout=timeout)
         connection.connect()

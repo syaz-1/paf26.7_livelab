@@ -12,6 +12,7 @@ New to this checkout or connecting from another machine? Read the [complete envi
 |---|---|---|
 | Database already prepared; configure everything through PAF | [PAF configuration-only LiveLab](docs/livelab-paf-only/README.md) | [Download DOCX](docs/livelab-paf-only/ADB_Health_Monitoring_Agent_PAF_Only_LiveLab.docx) |
 | Need database preparation and PAF configuration | [Complete LiveLab](docs/livelab/README.md) | [Download DOCX](docs/livelab/ADB_Health_Monitoring_Agent_LiveLab.docx) |
+| Add AI-led DBA troubleshooting through ADB MCP | [MCP troubleshooting lab](docs/livelab-mcp/README.md) | Markdown guide; draft workflow smoke-tested |
 
 The PAF-only lab assumes the runtime account, permissions, monitoring views and provider access are ready. Neither guide installs PAF or provisions an Autonomous Database. Both are local LiveLabs-style workshop packages, not published Oracle LiveLabs offerings.
 
