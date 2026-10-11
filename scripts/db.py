@@ -12,7 +12,6 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 SQLCL = Path('/home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql')
 PRIVATE = ROOT / '.local'
-PASSWORD = PRIVATE / 'db_health_agent.password'
 
 
 def main():
@@ -20,7 +19,11 @@ def main():
     parser.add_argument('action', choices=('preflight', 'provision', 'install', 'verify-admin', 'verify-runtime', 'install-discovery-test', 'verify-discovery-test', 'install-runtime-api'))
     parser.add_argument('--connection', required=True, help='Existing saved SQLcl connection name')
     parser.add_argument('--expected-db', required=True, help='Exact SYS_CONTEXT(USERENV, DB_NAME) value')
+    parser.add_argument('--private-dir', type=Path, default=PRIVATE,
+                        help='Private credential directory (default: .local)')
     args = parser.parse_args()
+    private_dir = args.private_dir.resolve()
+    password_file = private_dir / 'db_health_agent.password'
     if any(c in args.connection for c in '\r\n"'):
         parser.error('Connection name cannot contain quotes or line breaks.')
     if not re.fullmatch(r'[A-Za-z0-9_$#]+', args.expected_db):
@@ -30,17 +33,17 @@ def main():
 
     password = None
     if args.action == 'provision':
-        PRIVATE.mkdir(mode=0o700, exist_ok=True)
-        PRIVATE.chmod(0o700)
+        private_dir.mkdir(mode=0o700, exist_ok=True)
+        private_dir.chmod(0o700)
         password = 'Aa9!' + ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(36))
         try:
-            fd = os.open(PASSWORD, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            fd = os.open(password_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         except FileExistsError:
             parser.error('Credential file already exists. Inspect prior provisioning; do not reset it automatically.')
         with os.fdopen(fd, 'w') as stream:
             stream.write(password + '\n')
     elif args.action in ('verify-runtime', 'verify-discovery-test'):
-        password = PASSWORD.read_text().strip()
+        password = password_file.read_text().strip()
         if not re.fullmatch(r'[A-Za-z0-9!_-]{24,64}', password):
             parser.error('Unexpected credential format.')
 
@@ -106,7 +109,7 @@ def main():
         return 1
     print(f'{args.action}: PASS')
     if args.action == 'provision':
-        print('Runtime credential saved to .local/db_health_agent.password (mode 0600).')
+        print(f'Runtime credential saved to {password_file} (mode 0600).')
     return 0
 
 
