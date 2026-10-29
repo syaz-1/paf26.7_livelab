@@ -1,0 +1,241 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Oracle Monitoring Demo</title><style>body{font:16px/1.5 Arial,sans-serif;color:#18354a;max-width:1080px;margin:40px auto;padding:0 24px}h2{font-size:25px;margin-top:36px}h3{font-size:20px;margin-top:28px}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{border:1px solid #b8c8d4;padding:10px;text-align:left;vertical-align:top}th{background:#ebf2f7}pre{background:#f3f5f7;padding:16px;white-space:pre-wrap;overflow-wrap:anywhere}code{font-family:Consolas,monospace}img,svg{max-width:100%;height:auto}a{color:#005ca4}</style></head><body>
+<h2>Demo Introduction</h2>
+<p>This demo shows a conversational database monitoring assistant built with Oracle Private Agent Factory and Select AI. Users ask questions such as “Are any sessions blocked?” or “Which jobs failed in the last 48 hours?” The Agent queries live monitoring views, explains the findings and asks for clarification when needed. It demonstrates on-demand monitoring without performing database changes.</p>
+<h2>Demo Architecture</h2>
+<figure><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" role="img" aria-labelledby="title description">
+  <title id="title">Oracle Database Monitoring Agent Architecture</title>
+  <desc id="description">A presenter uses Private Agent Factory. The Agent calls Select AI Bridge, which connects as DB_HEALTH_AGENT to a Select AI profile and five monitoring views. PAF repository accounts are separate. Agent and Select AI models have separate connections.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 Z" fill="#52667a"/></marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #18354a; }
+      .title { font-size: 30px; font-weight: 700; }
+      .section { font-size: 22px; font-weight: 700; }
+      .label { font-size: 19px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .note { font-size: 15px; fill: #52667a; }
+      .line { fill: none; stroke: #52667a; stroke-width: 2.5; marker-end: url(#arrow); }
+      .two { marker-start: url(#arrow); }
+      .dashed { stroke-dasharray: 7 6; }
+      .box { fill: #fff; stroke: #a7bbc9; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1400" height="1020" fill="#f7f9fb"/>
+  <text x="60" y="54" class="title">Oracle Database Monitoring Agent</text>
+  <text x="60" y="84" class="body">Demo architecture · Private Agent Factory 26.7 + Select AI</text>
+
+  <rect x="340" y="112" width="300" height="62" rx="12" class="box"/>
+  <text x="490" y="139" text-anchor="middle" class="label">Presenter browser</text>
+  <text x="490" y="162" text-anchor="middle" class="note">Playground · questions and answers</text>
+  <path d="M490 174 V205" class="line two"/>
+
+  <rect x="60" y="210" width="840" height="350" rx="18" fill="#e9f2f8" stroke="#b6cedd"/>
+  <text x="86" y="247" class="section">Private Agent Factory</text>
+  <rect x="92" y="288" width="180" height="80" rx="12" class="box"/>
+  <text x="182" y="334" text-anchor="middle" class="label">Chat Input</text>
+  <rect x="350" y="280" width="280" height="98" rx="12" fill="#183f58"/>
+  <text x="490" y="312" text-anchor="middle" style="fill:white" class="label">Monitoring Agent</text>
+  <text x="490" y="338" text-anchor="middle" style="fill:#e2eef5" class="body">Instructions + tool calling</text>
+  <text x="490" y="361" text-anchor="middle" style="fill:#e2eef5" class="note">Memory disabled</text>
+  <rect x="708" y="288" width="160" height="80" rx="12" class="box"/>
+  <text x="788" y="334" text-anchor="middle" class="label">Chat Output</text>
+  <path d="M272 328 H350" class="line"/>
+  <path d="M630 328 H708" class="line"/>
+  <rect x="350" y="448" width="280" height="78" rx="12" class="box"/>
+  <text x="490" y="479" text-anchor="middle" class="label">Select AI Bridge</text>
+  <text x="490" y="505" text-anchor="middle" class="body">Profile / Run SQL</text>
+  <path d="M490 378 V448" class="line two"/>
+  <text x="510" y="416" class="note">Tool calls / results</text>
+
+  <rect x="980" y="210" width="360" height="350" rx="18" fill="#f3eef8" stroke="#ccbfdd"/>
+  <text x="1004" y="247" class="section">Approved model endpoints</text>
+  <rect x="1004" y="280" width="312" height="98" rx="12" class="box"/>
+  <text x="1160" y="312" text-anchor="middle" class="label">Agent model</text>
+  <text x="1160" y="338" text-anchor="middle" class="body">Interpret the request</text>
+  <text x="1160" y="361" text-anchor="middle" class="body">Explain returned evidence</text>
+  <path d="M630 298 H1004" class="line two"/>
+  <rect x="1004" y="448" width="312" height="78" rx="12" class="box"/>
+  <text x="1160" y="479" text-anchor="middle" class="label">Select AI model</text>
+  <text x="1160" y="505" text-anchor="middle" class="body">Generate SQL</text>
+
+  <rect x="60" y="630" width="1280" height="308" rx="18" fill="#edf4ed" stroke="#bdcfbd"/>
+  <text x="86" y="668" class="section">Autonomous AI Database 26ai</text>
+  <rect x="86" y="700" width="260" height="172" rx="12" class="box"/>
+  <text x="216" y="733" text-anchor="middle" class="label">PAF repository</text>
+  <text x="216" y="769" text-anchor="middle" class="body">PAF_REPOSITORY</text>
+  <text x="216" y="795" text-anchor="middle" class="body">AAI_RO_PAF_REPOSITORY</text>
+  <text x="216" y="835" text-anchor="middle" class="note">Configuration, flows and state</text>
+  <path d="M120 560 V700" class="line dashed"/>
+  <text x="135" y="605" class="note">Separate repository access</text>
+
+  <rect x="390" y="700" width="300" height="172" rx="12" class="box"/>
+  <text x="540" y="733" text-anchor="middle" class="label">Select AI profile</text>
+  <text x="540" y="765" text-anchor="middle" class="body">DB_HEALTH_AGENT</text>
+  <text x="540" y="803" text-anchor="middle" class="note">Login: DB_HEALTH_AGENT</text>
+  <text x="540" y="835" text-anchor="middle" class="note">Generate and execute SQL</text>
+  <path d="M490 526 V700" class="line two"/>
+  <text x="510" y="599" class="note">Runtime database connection</text>
+  <path d="M690 720 H940 V487 H1004" class="line two"/>
+  <text x="960" y="600" class="note">Database-to-model access</text>
+
+  <rect x="738" y="750" width="274" height="122" rx="12" class="box"/>
+  <text x="875" y="780" text-anchor="middle" class="label">Five MONITOR_* views</text>
+  <text x="875" y="808" text-anchor="middle" class="body">Identity · sessions · storage</text>
+  <text x="875" y="834" text-anchor="middle" class="body">Job runs · SQL workload</text>
+  <path d="M690 812 H738" class="line"/>
+  <rect x="1060" y="750" width="254" height="122" rx="12" class="box"/>
+  <text x="1187" y="782" text-anchor="middle" class="label">Monitoring sources</text>
+  <text x="1187" y="813" text-anchor="middle" class="body">SYS views</text>
+  <text x="1187" y="839" text-anchor="middle" class="body">Database context</text>
+  <path d="M1012 812 H1060" class="line"/>
+  <text x="86" y="910" class="note">Demo option: share one database with separate schemas, or host the PAF repository in another database.</text>
+  <text x="60" y="976" class="note">Model endpoints may be outside the PAF network. Monitoring is on demand; current and cumulative evidence has scope limits.</text>
+</svg>
+<figcaption>Oracle Database Monitoring Agent architecture showing PAF, Select AI, monitoring views, repository accounts and model endpoints.</figcaption></figure>
+<p>Solid arrows show workflow, data and model connections. The dashed arrow shows separate repository access. Query results return through the Bridge to the Agent for explanation. The model endpoints may be hosted outside the PAF network.</p>
+<p>For a compact demo, one Autonomous Database can host both the PAF repository and monitoring schemas. Keep their accounts separate. Use another database for the repository if the demo design requires it, and repeat the relevant connection checks against each database.</p>
+<h2>Demo Prerequisites</h2>
+<p>The facilitator needs an OCI compartment and permission to provision the demo&#x27;s database, networking and PAF host or Marketplace stack. Participants need a PAF login with workflow, source and model configuration access. Obtain approved credentials through a secret manager; do not place passwords, private keys, populated connection strings or wallets in project files.</p>
+<p>Record these nonsecret values before starting:</p>
+<table>
+<tr><th>Setting</th><th>Demo value or choice</th></tr>
+<tr><td>Deployment</td><td>Private Agent Factory 26.7; OCI Marketplace path below</td></tr>
+<tr><td>Database</td><td>Autonomous AI Database 26ai, Transaction Processing demo workload</td></tr>
+<tr><td>Expected database identity</td><td>Actual <code>SYS_CONTEXT(&#x27;USERENV&#x27;,&#x27;DB_NAME&#x27;)</code>, verified through SQLcl</td></tr>
+<tr><td>PAF repository owner</td><td><code>PAF_REPOSITORY</code></td></tr>
+<tr><td>PAF repository companion</td><td><code>AAI_RO_PAF_REPOSITORY</code></td></tr>
+<tr><td>Monitoring login and view owner</td><td><code>DB_HEALTH_AGENT</code></td></tr>
+<tr><td>PAF database source</td><td><code>ADB HEALTH MVP</code></td></tr>
+<tr><td>Agent model registration</td><td><code>llm_model_entry</code>, or a distinct demo registration</td></tr>
+<tr><td>Select AI profile</td><td><code>DB_HEALTH_AGENT</code></td></tr>
+<tr><td>New workflow</td><td><code>ADB Health Monitoring Agent Demo</code></td></tr>
+<tr><td>Provider</td><td>Approved OCI region, compartment and currently available models</td></tr>
+</table>
+<p>Provide browser-to-PAF HTTPS access, SQLcl-to-database connectivity, PAF-to-database connectivity, PAF-to-Agent-model access and database-to-Select-AI-model access. These are separate paths. For private endpoints, establish private routing and DNS resolution from the actual PAF host/container and the facilitator workstation. Limit inbound access to the demo audience and administration path; use the ports in the actual database connection descriptor.</p>
+<h2>End to End Demo Environment Setup</h2>
+<h3>1. Provision the Autonomous Database</h3>
+<p>In the OCI Console, open <strong>Oracle AI Database → Autonomous AI Database → Create Autonomous AI Database</strong>. Select the demo compartment, a recognizable display name, Transaction Processing and Oracle AI Database 26ai. Set compute/storage within the demo budget and enter the ADMIN password through the Console. Choose the approved network access option, create the database and wait for <strong>Available</strong>. See <a href="https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-provision.html">Oracle database provisioning</a>.</p>
+<p>From <strong>Database connection</strong>, obtain the service descriptor and download a wallet if the selected authentication method requires one. Store it outside the checkout in an approved local secret location. Use its actual host, port and service values when configuring SQLcl and PAF. A public endpoint restricted to approved sources can serve a demo; a private endpoint additionally requires working private connectivity.</p>
+<h3>2. Verify SQLcl and the database identity</h3>
+<p>Use the SQLcl bundled with Oracle SQL Developer. The path configured in the original lab is:</p>
+<pre><code>/home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql -version</code></pre>
+<p>If that extension version is absent, locate the installed extension&#x27;s <code>dbtools/sqlcl/bin/sql</code>, verify it with <code>-version</code> and use the verified path. Do not assume another machine has the same extension directory. Start SQLcl with <code>/nolog</code>, then use your approved saved ADMIN connection:</p>
+<pre><code>connect -name &quot;YOUR_ADMIN_CONNECTION&quot;
+set echo off
+set verify off
+set history off
+spool off
+select sys_context(&#x27;USERENV&#x27;,&#x27;SESSION_USER&#x27;) session_user,
+       sys_context(&#x27;USERENV&#x27;,&#x27;DB_NAME&#x27;) db_name,
+       sys_context(&#x27;USERENV&#x27;,&#x27;CON_NAME&#x27;) container_name
+from dual;</code></pre>
+<p>Proceed only when the login is ADMIN and the database is the intended demo target. Record its actual <code>DB_NAME</code>; it may differ from the Console display name. Keep credentials in an approved connection store, outside the project.</p>
+<h3>3. Prepare the PAF repository accounts</h3>
+<p>Check for existing accounts before creating anything:</p>
+<pre><code>select username, account_status
+from dba_users
+where username in (&#x27;PAF_REPOSITORY&#x27;, &#x27;AAI_RO_PAF_REPOSITORY&#x27;, &#x27;DB_HEALTH_AGENT&#x27;);</code></pre>
+<p>For a fresh demo, create the repository owner and companion using the template below. Enter password-bearing statements only in the private SQLcl session with history/spooling disabled; replace the placeholders with approved passwords without saving the populated statements. The companion uses the same repository password for this documented setup. Reuse approved accounts if already configured; do not reset an existing deployment&#x27;s credentials.</p>
+<pre><code>create user PAF_REPOSITORY identified by &quot;&lt;repository-password&gt;&quot;
+  default tablespace DATA quota unlimited on DATA;
+grant create session, create table, create sequence, create trigger,
+      create type, create procedure, create view, create synonym
+  to PAF_REPOSITORY;
+grant read, write on directory DATA_PUMP_DIR to PAF_REPOSITORY;
+grant select on SYS.V_$PARAMETER to PAF_REPOSITORY;
+
+create user AAI_RO_PAF_REPOSITORY identified by &quot;&lt;repository-password&gt;&quot;;
+grant create session to AAI_RO_PAF_REPOSITORY;</code></pre>
+<p><code>DATA</code> is the demo&#x27;s Autonomous tablespace choice; verify it exists first. The owner is dedicated to PAF metadata. These repository grants follow <a href="https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/database-setup.html">Oracle database preparation</a>.</p>
+<p>Connect as <code>PAF_REPOSITORY</code> and verify:</p>
+<pre><code>select value from sys.v_$parameter where name = &#x27;max_string_size&#x27;;
+select username from all_users where username = &#x27;AAI_RO_PAF_REPOSITORY&#x27;;</code></pre>
+<p>Expect <code>EXTENDED</code> and the companion username. Test a separate companion login too. If the parameter differs, have the DBA resolve the repository prerequisite before installation.</p>
+<h3>4. Deploy and initialize Private Agent Factory</h3>
+<p>Use <a href="https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/install-oci-marketplace.html">Oracle&#x27;s PAF Marketplace installation</a>:</p>
+<p>1. Open the PAF Marketplace listing, select <strong>Get App → Launch Stack</strong>, review the terms and choose the demo compartment.</p>
+<p>2. Select a supported shape with available quota, an SSH public key, and the intended VCN/subnet. Oracle lists minimum Flex resources of 8 CPU cores, 16 GB RAM and 120 GB boot volume; verify the current stack requirements.</p>
+<p>3. Create the stack and wait for a successful job. Open <code>Agent_Factory_URL</code> from Outputs over the approved network path. Establish trusted HTTPS for the demo hostname.</p>
+<p>4. In the installation wizard, create the PAF administrator login. Configure the repository connection using <code>PAF_REPOSITORY</code>, its password and descriptor/wallet. Test the connection, install components and configure/test the initial LLM.</p>
+<p>5. Finish installation, sign in and verify the PAF version and home screen.</p>
+<p>The repository connection above is separate from the monitoring data source created next. Restrict host access to the intended demo users; a private-subnet deployment needs a VPN, Bastion or other approved access path. Keep stack outputs and logs containing environment details private.</p>
+<h3>5. Create the monitoring account and views</h3>
+<p>Reconnect as ADMIN and recheck the database identity from step 2. If <code>DB_HEALTH_AGENT</code> is absent, create it interactively with an independently managed runtime password:</p>
+<pre><code>create user DB_HEALTH_AGENT identified by &quot;&lt;monitoring-password&gt;&quot;;
+grant create session to DB_HEALTH_AGENT;</code></pre>
+<p>From a SQLcl session started in the repository root, run the supplied first-install script, replacing <code>YOUR_DB_NAME</code> with the verified identifier:</p>
+<pre><code>@docs/livelab/files/prepare-monitoring.sql YOUR_DB_NAME</code></pre>
+<p>The script checks ADMIN and the expected database, grants cloud-package execution and direct access to five SYS monitoring sources, and creates the five read-only <code>MONITOR_*</code> views. It stops if target objects already exist. Database DDL commits independently; inspect partial state after a failure rather than rerunning blindly. The optional <code>DB_HEALTH_OWNER</code> package schema is not needed for this demo.</p>
+<p>Connect through an actual <code>DB_HEALTH_AGENT</code> login and run:</p>
+<pre><code>@docs/livelab/files/verify-monitoring.sql YOUR_DB_NAME</code></pre>
+<p>Expect five views marked <code>VALID</code> and <code>READ_ONLY=Y</code>, followed by successful bounded reads. No matching sessions or jobs can be a valid result. Keep direct-query results private for comparison with the Agent answers.</p>
+<h3>6. Configure model access and the PAF data source</h3>
+<p>Have the OCI administrator authorize the model-calling identity for the approved compartment and models. Configure an OCI API signing key for that identity, retaining its private key in the secret manager. Collect the tenancy/user OCIDs, fingerprint, model region and compartment OCID. Use the <a href="https://docs.oracle.com/en-us/iaas/Content/generative-ai/iam-policies.htm">OCI Generative AI IAM guidance</a> to scope model access. PAF application login alone does not authorize OCI inference.</p>
+<p>In PAF, open <strong>Data Sources → Add Data Source → Database</strong>. Create <strong>ADB HEALTH MVP</strong>, enter the database descriptor/wallet details and <code>DB_HEALTH_AGENT</code> credential, then test and save. Do not use ADMIN or <code>PAF_REPOSITORY</code> as the monitoring source.</p>
+<p>Open <strong>LLM Management</strong>, create or reuse <strong>llm_model_entry</strong>, configure the approved OCI model and authentication, then test and save. Choose a model that supports the Agent&#x27;s tool calls. The final Playground query verifies tool use beyond the model connection test.</p>
+<h3>7. Create the database Select AI credential and profile</h3>
+<p>Open <strong>Settings → Select AI Framework</strong> and select <strong>ADB HEALTH MVP</strong>. In <strong>Credentials</strong>, create or reuse an approved OCI credential with the signing identity details and private key entered only in the credential fields. This database-owned credential is separate from the Agent&#x27;s LLM registration. See <a href="https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/select-ai.html">Oracle Select AI configuration</a>.</p>
+<p>Create the profile with these values:</p>
+<table>
+<tr><th>Field</th><th>Demo setting</th></tr>
+<tr><td>Profile name</td><td><code>DB_HEALTH_AGENT</code></td></tr>
+<tr><td>Provider / credential</td><td>OCI / approved database-owned OCI credential</td></tr>
+<tr><td>Region / compartment / model</td><td>Approved, currently available combination</td></tr>
+<tr><td>Max tokens</td><td><code>4096</code></td></tr>
+<tr><td>NL2SQL / RAG</td><td>On / Off</td></tr>
+<tr><td>Object list mode</td><td>All, with the five objects selected below</td></tr>
+<tr><td>Schema owner</td><td><code>DB_HEALTH_AGENT</code></td></tr>
+<tr><td>Objects</td><td><code>MONITOR_DATABASE_OVERVIEW</code>, <code>MONITOR_SESSIONS</code>, <code>MONITOR_STORAGE_USAGE</code>, <code>MONITOR_JOB_RUNS</code>, <code>MONITOR_SQL_WORKLOAD</code></td></tr>
+</table>
+<p>The recorded lab used <code>us-chicago-1</code> and <code>google.gemini-2.5-flash</code>; these are historical configuration examples, not a guarantee of current availability. Model calls originate separately from PAF and the database. Verify outbound database access to the selected provider if runtime generation fails.</p>
+<p>Start a fresh demo with <strong>Enforce Object List = On</strong>. In the recorded implementation, storage/job queries encountered <code>ORA-20004</code> under enforcement despite referencing selected views. The approved demo workaround was <strong>Off</strong>; use it only after reviewing the same failure and accepting the wider account access. With enforcement off, the object list guides generation and does not enforce a five-view execution boundary. See the <a href="../../tests/paf/select-ai-validation-investigation-2026-09-24.md">recorded investigation</a>.</p>
+<p>Validate and save the profile. Profile validation alone does not prove that actual monitoring queries work.</p>
+<h3>8. Build the monitoring Agent workflow</h3>
+<p>Create <strong>ADB Health Monitoring Agent Demo</strong> in <strong>Workflows / My Custom Flows</strong>. Add four components and configure them:</p>
+<table>
+<tr><th>Component</th><th>Configuration</th></tr>
+<tr><td>Chat Input</td><td>User message input</td></tr>
+<tr><td>Agent</td><td>Approved model registration; temperature <code>0.01</code>; paste the complete <a href="../monitoring-agent-instructions.txt">Agent instructions</a></td></tr>
+<tr><td>Select AI Bridge</td><td>Mode <strong>Profile</strong>; database <strong>ADB HEALTH MVP</strong>; profile <strong>DB_HEALTH_AGENT</strong>; action <strong>Run SQL</strong></td></tr>
+<tr><td>Chat Output</td><td>Agent&#x27;s final message</td></tr>
+</table>
+<p>Wire the ports exactly:</p>
+<pre><code>Chat Input: Message ------&gt; Agent: Prompt
+Select AI Bridge: Tool ---&gt; Agent: Tools
+Agent: Message -----------&gt; Chat Output: Message</code></pre>
+<p>Save, disable Agent memory and cross-thread sharing where exposed, and reopen settings to confirm. Use fresh chats for independent tests. Keep follow-up answers to clarification in the same chat. <strong>Show SQL</strong> is useful for diagnosis but does not execute queries; the demo needs <strong>Run SQL</strong>.</p>
+<p>For the detailed builder walkthrough and existing screenshots, use <a href="../livelab-paf-only/README.md">PAF-only Labs 2–6</a>. Create a separate demo flow rather than editing the existing published MVP.</p>
+<h2>Customer Demo Script</h2>
+<p>Open the saved workflow in Playground. Explain that each answer uses live demo observations, so counts can change and there may be no failures or blockers.</p>
+<table>
+<tr><th>Step</th><th>Presenter action or prompt</th><th>Message to demonstrate</th></tr>
+<tr><td>1</td><td>Show the four-node canvas and Bridge settings.</td><td>The Agent uses Select AI as a tool against a dedicated monitoring login.</td></tr>
+<tr><td>2</td><td>Show the database identity and service name.</td><td>Establish that a real query reaches the intended database.</td></tr>
+<tr><td>3</td><td>Show tablespaces ordered by usage percentage, highest first.</td><td>Obtain an understandable capacity summary with the service-quota distinction.</td></tr>
+<tr><td>4</td><td>Are any sessions blocked? Identify the blocking instance and SID.</td><td>Explain the current snapshot, including a valid no-matches result.</td></tr>
+<tr><td>5</td><td>Show failed job runs in the last 48 hours.</td><td>Apply an explicit window; missing retained failures do not prove every expected job ran.</td></tr>
+<tr><td>6</td><td>The app feels slow. Can you check the database?</td><td>Complete both current-session and cumulative-workload checks without asserting an unproven cause.</td></tr>
+<tr><td>7</td><td>My overnight report did not arrive. Did something fail?</td><td>Ask for the report/job identity, window and timezone; supply actual values in the follow-up.</td></tr>
+<tr><td>8</td><td>Was it slower yesterday than today?</td><td>Explain the absence of performance history.</td></tr>
+<tr><td>9</td><td>show -5 sessions</td><td>Ask for a valid limit instead of silently changing it.</td></tr>
+<tr><td>10</td><td>Just fix whatever is slowing things down.</td><td>Respect monitoring scope and avoid claiming remediation.</td></tr>
+</table>
+<p>If time permits, finish with <strong>Check overall database health</strong> and review coverage of all five monitoring areas. An answer that ends with a promise to perform another check is incomplete. Do not create artificial incidents merely to populate the demonstration.</p>
+<h2>Validation and Known Demo Limitations</h2>
+<p>Before a customer session, run the <a href="../livelab/files/test-prompts.md">24 validation prompts</a>, record pass/partial/fail privately and compare key answers with the SQLcl verification results. Confirm identity, storage ordering, blocker scope, the exact job window, cumulative SQL interpretation, and a complete overall-health answer. Test invalid input and unrelated questions as well as successful queries.</p>
+<p>The September implementation reports document a baseline and targeted instruction retests; the full suite was not rerun after the final overall-health adjustment. The <a href="../livelab-paf-only/README.md">PAF-only workshop</a> also records a 28 September overnight-report clarification failure. Treat clarification as an acceptance test, not a guaranteed behavior. See the <a href="../../tests/paf/results-monitoring-agent-2026-09-24.md">Agent test report</a>.</p>
+<p><code>COLLECTED_AT_UTC</code> is calculated when queried, not stored history. Use Scheduler event timestamps for job windows. Tablespace metrics, retained runs and cumulative SQL counters support bounded observations; they do not establish a complete root cause or continuous service health. This demo provides conversational, on-demand checks, not scheduled monitoring or alerts.</p>
+<p>The views are read-only, but the login retains underlying SELECT and cloud-package privileges. Agent instructions express intended behavior and are not a hard authorization boundary. Do not present this configuration as a hardened production monitoring service.</p>
+<h2>Troubleshooting and Demo Handover</h2>
+<table>
+<tr><th>Symptom</th><th>Check</th></tr>
+<tr><td>PAF installation cannot validate the repository</td><td>Owner login, companion account, <code>SYS.V_$PARAMETER</code> grant and <code>MAX_STRING_SIZE=EXTENDED</code>.</td></tr>
+<tr><td>Browser reaches PAF but database test fails</td><td>Database routing, DNS, descriptor, wallet, credentials and rules from the PAF host/container.</td></tr>
+<tr><td>Agent model test works but Select AI fails</td><td>Database-owned credential, inference authorization, model availability and outbound provider access.</td></tr>
+<tr><td>Profile picker shows no monitoring views</td><td>Source login must be <code>DB_HEALTH_AGENT</code>; select that owner and verify five valid views.</td></tr>
+<tr><td>SQL text appears instead of findings</td><td>Change Bridge action to <strong>Run SQL</strong>.</td></tr>
+<tr><td>Storage/jobs fail with <code>ORA-20004</code></td><td>Review generated SQL, saved objects and the documented demo enforcement workaround.</td></tr>
+<tr><td>Overall-health answer is absent or incomplete</td><td>Verify the full Agent instructions, including the two-call completion strategy, and inspect tool execution details.</td></tr>
+</table>
+<p>Hand over the nonsecret connection names, model/profile settings, workflow name, test date and unresolved issues. Publish only after reviewing the demo results; Playground testing does not require external integration. For a shared demo, leave common accounts and sources intact. For disposable infrastructure, the environment owner should remove only resources created for this demo after checking dependencies.</p>
+</body></html>

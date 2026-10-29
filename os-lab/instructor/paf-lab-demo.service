@@ -1,0 +1,14 @@
+[Unit]
+Description=PAF lab demonstration service (no application traffic)
+
+[Service]
+Type=simple
+DynamicUser=true
+ExecStart=/usr/bin/sleep infinity
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

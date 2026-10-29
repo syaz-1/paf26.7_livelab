@@ -1,0 +1,24 @@
+[Unit]
+Description=PAF Linux Health Lab read-only MCP
+After=network.target
+
+[Service]
+User=paf-health
+Group=paf-health
+WorkingDirectory=/opt/paf-linux-lab
+EnvironmentFile=/etc/paf-linux-lab/server.env
+ExecStart=/opt/paf-linux-lab/venv/bin/python /opt/paf-linux-lab/server.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+CapabilityBoundingSet=
+RestrictSUIDSGID=true
+LockPersonality=true
+UMask=0077
+# Do not enable ProtectProc/PrivateUsers: the exercise needs host process evidence.
+
+[Install]
+WantedBy=multi-user.target

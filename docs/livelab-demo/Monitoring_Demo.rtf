@@ -1,0 +1,303 @@
+{\rtf1\ansi\deff0\uc1{\fonttbl{\f0 Calibri;}{\f1 Consolas;}}
+{\colortbl;\red24\green53\blue74;\red0\green92\blue164;\red235\green242\blue247;}\paperw11906\paperh16838\margl850\margr850\margt900\margb900\f0\fs22
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Demo Introduction\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 This demo shows a conversational database monitoring assistant built with Oracle Private Agent Factory and Select AI. Users ask questions such as \u8220?Are any sessions blocked?\u8221? or \u8220?Which jobs failed in the last 48 hours?\u8221? The Agent queries live monitoring views, explains the findings and asks for clarification when needed. It demonstrates on-demand monitoring without performing database changes.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Demo Architecture\b0\cf0\fs22\par
+\pard\sa180 {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/docs/livelab-demo/images/monitoring-agent-architecture.svg"}{\fldrslt{\ul\cf2 Open architecture image}}}\par
+\pard\sa160\f0\fs22 Solid arrows show workflow, data and model connections. The dashed arrow shows separate repository access. Query results return through the Bridge to the Agent for explanation. The model endpoints may be hosted outside the PAF network.\par
+\pard\sa160\f0\fs22 For a compact demo, one Autonomous Database can host both the PAF repository and monitoring schemas. Keep their accounts separate. Use another database for the repository if the demo design requires it, and repeat the relevant connection checks against each database.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Demo Prerequisites\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 The facilitator needs an OCI compartment and permission to provision the demo's database, networking and PAF host or Marketplace stack. Participants need a PAF login with workflow, source and model configuration access. Obtain approved credentials through a secret manager; do not place passwords, private keys, populated connection strings or wallets in project files.\par
+\pard\sa160\f0\fs22 Record these nonsecret values before starting:\par
+\trowd\trgaph100\trleft0\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {\b Setting}\cell
+\pard\intbl\sa80\f0\fs20 {\b Demo value or choice}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Deployment}\cell
+\pard\intbl\sa80\f0\fs20 {Private Agent Factory 26.7; OCI Marketplace path below}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Database}\cell
+\pard\intbl\sa80\f0\fs20 {Autonomous AI Database 26ai, Transaction Processing demo workload}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Expected database identity}\cell
+\pard\intbl\sa80\f0\fs20 {Actual {\f1 SYS_CONTEXT('USERENV','DB_NAME')}, verified through SQLcl}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {PAF repository owner}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 PAF_REPOSITORY}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {PAF repository companion}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 AAI_RO_PAF_REPOSITORY}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Monitoring login and view owner}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 DB_HEALTH_AGENT}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {PAF database source}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 ADB HEALTH MVP}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Agent model registration}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 llm_model_entry}, or a distinct demo registration}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Select AI profile}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 DB_HEALTH_AGENT}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {New workflow}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 ADB Health Monitoring Agent Demo}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Provider}\cell
+\pard\intbl\sa80\f0\fs20 {Approved OCI region, compartment and currently available models}\cell
+\row
+\pard\sa140\par
+\pard\sa160\f0\fs22 Provide browser-to-PAF HTTPS access, SQLcl-to-database connectivity, PAF-to-database connectivity, PAF-to-Agent-model access and database-to-Select-AI-model access. These are separate paths. For private endpoints, establish private routing and DNS resolution from the actual PAF host/container and the facilitator workstation. Limit inbound access to the demo audience and administration path; use the ports in the actual database connection descriptor.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 End to End Demo Environment Setup\b0\cf0\fs22\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 1. Provision the Autonomous Database\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 In the OCI Console, open {\b Oracle AI Database \u8594? Autonomous AI Database \u8594? Create Autonomous AI Database}. Select the demo compartment, a recognizable display name, Transaction Processing and Oracle AI Database 26ai. Set compute/storage within the demo budget and enter the ADMIN password through the Console. Choose the approved network access option, create the database and wait for {\b Available}. See {\field{\*\fldinst HYPERLINK "https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-provision.html"}{\fldrslt{\ul\cf2 Oracle database provisioning}}}.\par
+\pard\sa160\f0\fs22 From {\b Database connection}, obtain the service descriptor and download a wallet if the selected authentication method requires one. Store it outside the checkout in an approved local secret location. Use its actual host, port and service values when configuring SQLcl and PAF. A public endpoint restricted to approved sources can serve a demo; a private endpoint additionally requires working private connectivity.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 2. Verify SQLcl and the database identity\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Use the SQLcl bundled with Oracle SQL Developer. The path configured in the original lab is:\par
+\pard\li180\ri180\sa0\f1\fs18 /home/syazwan/.vscode-server/extensions/oracle.sql-developer-26.2.1-linux-x64/dbtools/sqlcl/bin/sql -version\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 If that extension version is absent, locate the installed extension's {\f1 dbtools/sqlcl/bin/sql}, verify it with {\f1 -version} and use the verified path. Do not assume another machine has the same extension directory. Start SQLcl with {\f1 /nolog}, then use your approved saved ADMIN connection:\par
+\pard\li180\ri180\sa0\f1\fs18 connect -name "YOUR_ADMIN_CONNECTION"\par
+\pard\li180\ri180\sa0\f1\fs18 set echo off\par
+\pard\li180\ri180\sa0\f1\fs18 set verify off\par
+\pard\li180\ri180\sa0\f1\fs18 set history off\par
+\pard\li180\ri180\sa0\f1\fs18 spool off\par
+\pard\li180\ri180\sa0\f1\fs18 select sys_context('USERENV','SESSION_USER') session_user,\par
+\pard\li180\ri180\sa0\f1\fs18        sys_context('USERENV','DB_NAME') db_name,\par
+\pard\li180\ri180\sa0\f1\fs18        sys_context('USERENV','CON_NAME') container_name\par
+\pard\li180\ri180\sa0\f1\fs18 from dual;\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 Proceed only when the login is ADMIN and the database is the intended demo target. Record its actual {\f1 DB_NAME}; it may differ from the Console display name. Keep credentials in an approved connection store, outside the project.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 3. Prepare the PAF repository accounts\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Check for existing accounts before creating anything:\par
+\pard\li180\ri180\sa0\f1\fs18 select username, account_status\par
+\pard\li180\ri180\sa0\f1\fs18 from dba_users\par
+\pard\li180\ri180\sa0\f1\fs18 where username in ('PAF_REPOSITORY', 'AAI_RO_PAF_REPOSITORY', 'DB_HEALTH_AGENT');\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 For a fresh demo, create the repository owner and companion using the template below. Enter password-bearing statements only in the private SQLcl session with history/spooling disabled; replace the placeholders with approved passwords without saving the populated statements. The companion uses the same repository password for this documented setup. Reuse approved accounts if already configured; do not reset an existing deployment's credentials.\par
+\pard\li180\ri180\sa0\f1\fs18 create user PAF_REPOSITORY identified by "<repository-password>"\par
+\pard\li180\ri180\sa0\f1\fs18   default tablespace DATA quota unlimited on DATA;\par
+\pard\li180\ri180\sa0\f1\fs18 grant create session, create table, create sequence, create trigger,\par
+\pard\li180\ri180\sa0\f1\fs18       create type, create procedure, create view, create synonym\par
+\pard\li180\ri180\sa0\f1\fs18   to PAF_REPOSITORY;\par
+\pard\li180\ri180\sa0\f1\fs18 grant read, write on directory DATA_PUMP_DIR to PAF_REPOSITORY;\par
+\pard\li180\ri180\sa0\f1\fs18 grant select on SYS.V_$PARAMETER to PAF_REPOSITORY;\par
+\pard\li180\ri180\sa0\f1\fs18 \par
+\pard\li180\ri180\sa0\f1\fs18 create user AAI_RO_PAF_REPOSITORY identified by "<repository-password>";\par
+\pard\li180\ri180\sa0\f1\fs18 grant create session to AAI_RO_PAF_REPOSITORY;\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 {\f1 DATA} is the demo's Autonomous tablespace choice; verify it exists first. The owner is dedicated to PAF metadata. These repository grants follow {\field{\*\fldinst HYPERLINK "https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/database-setup.html"}{\fldrslt{\ul\cf2 Oracle database preparation}}}.\par
+\pard\sa160\f0\fs22 Connect as {\f1 PAF_REPOSITORY} and verify:\par
+\pard\li180\ri180\sa0\f1\fs18 select value from sys.v_$parameter where name = 'max_string_size';\par
+\pard\li180\ri180\sa0\f1\fs18 select username from all_users where username = 'AAI_RO_PAF_REPOSITORY';\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 Expect {\f1 EXTENDED} and the companion username. Test a separate companion login too. If the parameter differs, have the DBA resolve the repository prerequisite before installation.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 4. Deploy and initialize Private Agent Factory\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Use {\field{\*\fldinst HYPERLINK "https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/install-oci-marketplace.html"}{\fldrslt{\ul\cf2 Oracle's PAF Marketplace installation}}}:\par
+\pard\sa160\f0\fs22 1. Open the PAF Marketplace listing, select {\b Get App \u8594? Launch Stack}, review the terms and choose the demo compartment.\par
+\pard\sa160\f0\fs22 2. Select a supported shape with available quota, an SSH public key, and the intended VCN/subnet. Oracle lists minimum Flex resources of 8 CPU cores, 16 GB RAM and 120 GB boot volume; verify the current stack requirements.\par
+\pard\sa160\f0\fs22 3. Create the stack and wait for a successful job. Open {\f1 Agent_Factory_URL} from Outputs over the approved network path. Establish trusted HTTPS for the demo hostname.\par
+\pard\sa160\f0\fs22 4. In the installation wizard, create the PAF administrator login. Configure the repository connection using {\f1 PAF_REPOSITORY}, its password and descriptor/wallet. Test the connection, install components and configure/test the initial LLM.\par
+\pard\sa160\f0\fs22 5. Finish installation, sign in and verify the PAF version and home screen.\par
+\pard\sa160\f0\fs22 The repository connection above is separate from the monitoring data source created next. Restrict host access to the intended demo users; a private-subnet deployment needs a VPN, Bastion or other approved access path. Keep stack outputs and logs containing environment details private.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 5. Create the monitoring account and views\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Reconnect as ADMIN and recheck the database identity from step 2. If {\f1 DB_HEALTH_AGENT} is absent, create it interactively with an independently managed runtime password:\par
+\pard\li180\ri180\sa0\f1\fs18 create user DB_HEALTH_AGENT identified by "<monitoring-password>";\par
+\pard\li180\ri180\sa0\f1\fs18 grant create session to DB_HEALTH_AGENT;\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 From a SQLcl session started in the repository root, run the supplied first-install script, replacing {\f1 YOUR_DB_NAME} with the verified identifier:\par
+\pard\li180\ri180\sa0\f1\fs18 @docs/livelab/files/prepare-monitoring.sql YOUR_DB_NAME\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 The script checks ADMIN and the expected database, grants cloud-package execution and direct access to five SYS monitoring sources, and creates the five read-only {\f1 MONITOR_*} views. It stops if target objects already exist. Database DDL commits independently; inspect partial state after a failure rather than rerunning blindly. The optional {\f1 DB_HEALTH_OWNER} package schema is not needed for this demo.\par
+\pard\sa160\f0\fs22 Connect through an actual {\f1 DB_HEALTH_AGENT} login and run:\par
+\pard\li180\ri180\sa0\f1\fs18 @docs/livelab/files/verify-monitoring.sql YOUR_DB_NAME\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 Expect five views marked {\f1 VALID} and {\f1 READ_ONLY=Y}, followed by successful bounded reads. No matching sessions or jobs can be a valid result. Keep direct-query results private for comparison with the Agent answers.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 6. Configure model access and the PAF data source\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Have the OCI administrator authorize the model-calling identity for the approved compartment and models. Configure an OCI API signing key for that identity, retaining its private key in the secret manager. Collect the tenancy/user OCIDs, fingerprint, model region and compartment OCID. Use the {\field{\*\fldinst HYPERLINK "https://docs.oracle.com/en-us/iaas/Content/generative-ai/iam-policies.htm"}{\fldrslt{\ul\cf2 OCI Generative AI IAM guidance}}} to scope model access. PAF application login alone does not authorize OCI inference.\par
+\pard\sa160\f0\fs22 In PAF, open {\b Data Sources \u8594? Add Data Source \u8594? Database}. Create {\b ADB HEALTH MVP}, enter the database descriptor/wallet details and {\f1 DB_HEALTH_AGENT} credential, then test and save. Do not use ADMIN or {\f1 PAF_REPOSITORY} as the monitoring source.\par
+\pard\sa160\f0\fs22 Open {\b LLM Management}, create or reuse {\b llm_model_entry}, configure the approved OCI model and authentication, then test and save. Choose a model that supports the Agent's tool calls. The final Playground query verifies tool use beyond the model connection test.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 7. Create the database Select AI credential and profile\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Open {\b Settings \u8594? Select AI Framework} and select {\b ADB HEALTH MVP}. In {\b Credentials}, create or reuse an approved OCI credential with the signing identity details and private key entered only in the credential fields. This database-owned credential is separate from the Agent's LLM registration. See {\field{\*\fldinst HYPERLINK "https://docs.oracle.com/en/database/oracle/agent-factory/26.7/paias/select-ai.html"}{\fldrslt{\ul\cf2 Oracle Select AI configuration}}}.\par
+\pard\sa160\f0\fs22 Create the profile with these values:\par
+\trowd\trgaph100\trleft0\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {\b Field}\cell
+\pard\intbl\sa80\f0\fs20 {\b Demo setting}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Profile name}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 DB_HEALTH_AGENT}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Provider / credential}\cell
+\pard\intbl\sa80\f0\fs20 {OCI / approved database-owned OCI credential}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Region / compartment / model}\cell
+\pard\intbl\sa80\f0\fs20 {Approved, currently available combination}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Max tokens}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 4096}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {NL2SQL / RAG}\cell
+\pard\intbl\sa80\f0\fs20 {On / Off}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Object list mode}\cell
+\pard\intbl\sa80\f0\fs20 {All, with the five objects selected below}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Schema owner}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 DB_HEALTH_AGENT}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Objects}\cell
+\pard\intbl\sa80\f0\fs20 {{\f1 MONITOR_DATABASE_OVERVIEW}, {\f1 MONITOR_SESSIONS}, {\f1 MONITOR_STORAGE_USAGE}, {\f1 MONITOR_JOB_RUNS}, {\f1 MONITOR_SQL_WORKLOAD}}\cell
+\row
+\pard\sa140\par
+\pard\sa160\f0\fs22 The recorded lab used {\f1 us-chicago-1} and {\f1 google.gemini-2.5-flash}; these are historical configuration examples, not a guarantee of current availability. Model calls originate separately from PAF and the database. Verify outbound database access to the selected provider if runtime generation fails.\par
+\pard\sa160\f0\fs22 Start a fresh demo with {\b Enforce Object List = On}. In the recorded implementation, storage/job queries encountered {\f1 ORA-20004} under enforcement despite referencing selected views. The approved demo workaround was {\b Off}; use it only after reviewing the same failure and accepting the wider account access. With enforcement off, the object list guides generation and does not enforce a five-view execution boundary. See the {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/tests/paf/select-ai-validation-investigation-2026-09-24.md"}{\fldrslt{\ul\cf2 recorded investigation}}}.\par
+\pard\sa160\f0\fs22 Validate and save the profile. Profile validation alone does not prove that actual monitoring queries work.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs25 8. Build the monitoring Agent workflow\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Create {\b ADB Health Monitoring Agent Demo} in {\b Workflows / My Custom Flows}. Add four components and configure them:\par
+\trowd\trgaph100\trleft0\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {\b Component}\cell
+\pard\intbl\sa80\f0\fs20 {\b Configuration}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Chat Input}\cell
+\pard\intbl\sa80\f0\fs20 {User message input}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Agent}\cell
+\pard\intbl\sa80\f0\fs20 {Approved model registration; temperature {\f1 0.01}; paste the complete {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/docs/monitoring-agent-instructions.txt"}{\fldrslt{\ul\cf2 Agent instructions}}}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Select AI Bridge}\cell
+\pard\intbl\sa80\f0\fs20 {Mode {\b Profile}; database {\b ADB HEALTH MVP}; profile {\b DB_HEALTH_AGENT}; action {\b Run SQL}}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Chat Output}\cell
+\pard\intbl\sa80\f0\fs20 {Agent's final message}\cell
+\row
+\pard\sa140\par
+\pard\sa160\f0\fs22 Wire the ports exactly:\par
+\pard\li180\ri180\sa0\f1\fs18 Chat Input: Message ------> Agent: Prompt\par
+\pard\li180\ri180\sa0\f1\fs18 Select AI Bridge: Tool ---> Agent: Tools\par
+\pard\li180\ri180\sa0\f1\fs18 Agent: Message -----------> Chat Output: Message\par
+\pard\f0\fs22\sa150\par
+\pard\sa160\f0\fs22 Save, disable Agent memory and cross-thread sharing where exposed, and reopen settings to confirm. Use fresh chats for independent tests. Keep follow-up answers to clarification in the same chat. {\b Show SQL} is useful for diagnosis but does not execute queries; the demo needs {\b Run SQL}.\par
+\pard\sa160\f0\fs22 For the detailed builder walkthrough and existing screenshots, use {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/docs/livelab-paf-only/README.md"}{\fldrslt{\ul\cf2 PAF-only Labs 2\u8211?6}}}. Create a separate demo flow rather than editing the existing published MVP.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Customer Demo Script\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Open the saved workflow in Playground. Explain that each answer uses live demo observations, so counts can change and there may be no failures or blockers.\par
+\trowd\trgaph100\trleft0\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {\b Step}\cell
+\pard\intbl\sa80\f0\fs20 {\b Presenter action or prompt}\cell
+\pard\intbl\sa80\f0\fs20 {\b Message to demonstrate}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {1}\cell
+\pard\intbl\sa80\f0\fs20 {Show the four-node canvas and Bridge settings.}\cell
+\pard\intbl\sa80\f0\fs20 {The Agent uses Select AI as a tool against a dedicated monitoring login.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {2}\cell
+\pard\intbl\sa80\f0\fs20 {Show the database identity and service name.}\cell
+\pard\intbl\sa80\f0\fs20 {Establish that a real query reaches the intended database.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {3}\cell
+\pard\intbl\sa80\f0\fs20 {Show tablespaces ordered by usage percentage, highest first.}\cell
+\pard\intbl\sa80\f0\fs20 {Obtain an understandable capacity summary with the service-quota distinction.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {4}\cell
+\pard\intbl\sa80\f0\fs20 {Are any sessions blocked? Identify the blocking instance and SID.}\cell
+\pard\intbl\sa80\f0\fs20 {Explain the current snapshot, including a valid no-matches result.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {5}\cell
+\pard\intbl\sa80\f0\fs20 {Show failed job runs in the last 48 hours.}\cell
+\pard\intbl\sa80\f0\fs20 {Apply an explicit window; missing retained failures do not prove every expected job ran.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {6}\cell
+\pard\intbl\sa80\f0\fs20 {The app feels slow. Can you check the database?}\cell
+\pard\intbl\sa80\f0\fs20 {Complete both current-session and cumulative-workload checks without asserting an unproven cause.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {7}\cell
+\pard\intbl\sa80\f0\fs20 {My overnight report did not arrive. Did something fail?}\cell
+\pard\intbl\sa80\f0\fs20 {Ask for the report/job identity, window and timezone; supply actual values in the follow-up.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {8}\cell
+\pard\intbl\sa80\f0\fs20 {Was it slower yesterday than today?}\cell
+\pard\intbl\sa80\f0\fs20 {Explain the absence of performance history.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {9}\cell
+\pard\intbl\sa80\f0\fs20 {show -5 sessions}\cell
+\pard\intbl\sa80\f0\fs20 {Ask for a valid limit instead of silently changing it.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx700\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx5500\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {10}\cell
+\pard\intbl\sa80\f0\fs20 {Just fix whatever is slowing things down.}\cell
+\pard\intbl\sa80\f0\fs20 {Respect monitoring scope and avoid claiming remediation.}\cell
+\row
+\pard\sa140\par
+\pard\sa160\f0\fs22 If time permits, finish with {\b Check overall database health} and review coverage of all five monitoring areas. An answer that ends with a promise to perform another check is incomplete. Do not create artificial incidents merely to populate the demonstration.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Validation and Known Demo Limitations\b0\cf0\fs22\par
+\pard\sa160\f0\fs22 Before a customer session, run the {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/docs/livelab/files/test-prompts.md"}{\fldrslt{\ul\cf2 24 validation prompts}}}, record pass/partial/fail privately and compare key answers with the SQLcl verification results. Confirm identity, storage ordering, blocker scope, the exact job window, cumulative SQL interpretation, and a complete overall-health answer. Test invalid input and unrelated questions as well as successful queries.\par
+\pard\sa160\f0\fs22 The September implementation reports document a baseline and targeted instruction retests; the full suite was not rerun after the final overall-health adjustment. The {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/docs/livelab-paf-only/README.md"}{\fldrslt{\ul\cf2 PAF-only workshop}}} also records a 28 September overnight-report clarification failure. Treat clarification as an acceptance test, not a guaranteed behavior. See the {\field{\*\fldinst HYPERLINK "file:///home/syazwan/github/paf26.7_livelab/tests/paf/results-monitoring-agent-2026-09-24.md"}{\fldrslt{\ul\cf2 Agent test report}}}.\par
+\pard\sa160\f0\fs22 {\f1 COLLECTED_AT_UTC} is calculated when queried, not stored history. Use Scheduler event timestamps for job windows. Tablespace metrics, retained runs and cumulative SQL counters support bounded observations; they do not establish a complete root cause or continuous service health. This demo provides conversational, on-demand checks, not scheduled monitoring or alerts.\par
+\pard\sa160\f0\fs22 The views are read-only, but the login retains underlying SELECT and cloud-package privileges. Agent instructions express intended behavior and are not a hard authorization boundary. Do not present this configuration as a hardened production monitoring service.\par
+\pard\keepn\sb300\sa150\f0\cf1\b\fs30 Troubleshooting and Demo Handover\b0\cf0\fs22\par
+\trowd\trgaph100\trleft0\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clcbpat3\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {\b Symptom}\cell
+\pard\intbl\sa80\f0\fs20 {\b Check}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {PAF installation cannot validate the repository}\cell
+\pard\intbl\sa80\f0\fs20 {Owner login, companion account, {\f1 SYS.V_$PARAMETER} grant and {\f1 MAX_STRING_SIZE=EXTENDED}.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Browser reaches PAF but database test fails}\cell
+\pard\intbl\sa80\f0\fs20 {Database routing, DNS, descriptor, wallet, credentials and rules from the PAF host/container.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Agent model test works but Select AI fails}\cell
+\pard\intbl\sa80\f0\fs20 {Database-owned credential, inference authorization, model availability and outbound provider access.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Profile picker shows no monitoring views}\cell
+\pard\intbl\sa80\f0\fs20 {Source login must be {\f1 DB_HEALTH_AGENT}; select that owner and verify five valid views.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {SQL text appears instead of findings}\cell
+\pard\intbl\sa80\f0\fs20 {Change Bridge action to {\b Run SQL}.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Storage/jobs fail with {\f1 ORA-20004}}\cell
+\pard\intbl\sa80\f0\fs20 {Review generated SQL, saved objects and the documented demo enforcement workaround.}\cell
+\row
+\trowd\trgaph100\trleft0\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx3600\clbrdrt\brdrs\brdrw5\clbrdrb\brdrs\brdrw5\clbrdrl\brdrs\brdrw5\clbrdrr\brdrs\brdrw5\cellx10200
+\pard\intbl\sa80\f0\fs20 {Overall-health answer is absent or incomplete}\cell
+\pard\intbl\sa80\f0\fs20 {Verify the full Agent instructions, including the two-call completion strategy, and inspect tool execution details.}\cell
+\row
+\pard\sa140\par
+\pard\sa160\f0\fs22 Hand over the nonsecret connection names, model/profile settings, workflow name, test date and unresolved issues. Publish only after reviewing the demo results; Playground testing does not require external integration. For a shared demo, leave common accounts and sources intact. For disposable infrastructure, the environment owner should remove only resources created for this demo after checking dependencies.\par
+}
